@@ -83,26 +83,41 @@ $DRY_RUN && log "(dry-run mode — nada será alterado)"
 
 # Skills genéricas (sem contexto Cobli)
 SKILLS_GENERIC=(
-  ai-radar
+  add-alert-event
+  add-public-doc
   agent-browser
+  ai-radar
+  alarm-digest
   chrome-devtools
+  cobli-review
+  cobli-review-data
   daily
+  driver-association-investigation
   estimate
+  flink-deploy-recovery
   grill-me
   health-check
+  kafka-topics
+  kotlin-conventions
+  launchdarkly
   onboarding-doc
+  ops-probes
   pdf
   playwright
   playwright-local-setup
   pod-cleanup
   postmortem
   pr-comment
+  pr-ready
   promote-skill
   rds-pg-eval
   repo-doc
   repo-guide
   savepoint
   tdd
+  video-frames
+  webhook-lag-resend
+  webhook-local-validate
   workflow-conventions
 )
 
@@ -153,6 +168,8 @@ SCRIPTS_GENERIC=(
   memory-observer.sh
   db-backup.sh
   export-to-starter.sh
+  secret-get.sh
+  secret-set.sh
 )
 
 for s in "${SCRIPTS_GENERIC[@]}"; do

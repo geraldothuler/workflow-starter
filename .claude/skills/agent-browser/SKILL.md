@@ -65,7 +65,7 @@ agent-browser wait --load networkidle && \
 agent-browser snapshot -i
 # [usar ref do campo email e senha retornados pelo snapshot]
 agent-browser fill @e1 "email@cobli.co" && \
-agent-browser fill @e2 "$(security find-generic-password -s <service> -w)" && \
+agent-browser fill @e2 "$(bash ~/workflow/scripts/secret-get.sh <service>)" && \
 agent-browser click @e3
 
 # Persistir sessão para próximas chamadas
@@ -123,7 +123,7 @@ agent-browser snapshot -i | head -20
 
 ## Gotchas Cobli
 
-- **Credenciais:** nunca hardcodar — usar `$(security find-generic-password -s <key> -w)` inline
+- **Credenciais:** nunca hardcodar — usar `$(bash ~/workflow/scripts/secret-get.sh <key>)` inline
 - **SPAs (herbie-dashboard, app Cobli):** sempre usar `wait --load networkidle` após `open` — React precisa hidratar antes dos elementos estarem disponíveis
 - **Refs são efêmeras:** `@e1` do snapshot anterior invalida após qualquer navegação. Sempre tirar novo snapshot após mudança de página
 - **Sessão persistida:** `--session-name` salva cookies em `~/.agent-browser/sessions/<name>`. Útil para não fazer login a cada vez em automações recorrentes

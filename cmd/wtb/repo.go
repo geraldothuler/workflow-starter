@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -17,6 +16,7 @@ import (
 	"github.com/Cobliteam/workflow-toolkit/pkg/llm"
 	"github.com/Cobliteam/workflow-toolkit/pkg/memory"
 	"github.com/Cobliteam/workflow-toolkit/pkg/repoindex"
+	"github.com/Cobliteam/workflow-toolkit/pkg/secret"
 	"github.com/Cobliteam/workflow-toolkit/pkg/wtbserver"
 	"github.com/spf13/cobra"
 )
@@ -171,7 +171,7 @@ Examples:
 				CredResolver: resolver,
 			})
 			if err != nil {
-				return fmt.Errorf("llm provider %q: %w\nhint: store key via: security add-generic-password -s workflow-anthropic-api-key -a geraldothuler -w <key>", providerName, err)
+				return fmt.Errorf("llm provider %q: %w\nhint: bash ~/workflow/scripts/secret-set.sh workflow-anthropic-api-key <key>", providerName, err)
 			}
 
 			result := repoindex.IndexRepo(db, repoindex.IndexOptions{
@@ -1214,28 +1214,28 @@ Examples:
 			}
 			defer db.Close()
 
-			// Try resolver first (wtb keychain); fall back to geraldothuler account (manual Keychain setup)
+			// Try resolver first (wtb keychain); fall back to cross-platform secret helper
 			resolver, _ := credentials.NewFullResolver(root, os.Getenv("WTB_MASTER_KEY"))
 			ddAPIKey, ddAppKey := "", ""
 			if cred, err := resolver.Resolve(cmd.Context(), "workflow-dd-api-key", nil); err == nil {
 				ddAPIKey = cred.Value
 			}
 			if ddAPIKey == "" {
-				out, err2 := exec.Command("security", "find-generic-password", "-s", "workflow-dd-api-key", "-a", "geraldothuler", "-w").Output()
+				val, err2 := secret.Get("workflow-dd-api-key")
 				if err2 != nil {
-					return fmt.Errorf("DD API key not found: %w\nhint: security add-generic-password -s workflow-dd-api-key -a geraldothuler -w <key>", err2)
+					return fmt.Errorf("DD API key not found: %w\nhint: bash scripts/secret-set.sh workflow-dd-api-key <key>", err2)
 				}
-				ddAPIKey = strings.TrimSpace(string(out))
+				ddAPIKey = val
 			}
 			if cred, err := resolver.Resolve(cmd.Context(), "workflow-dd-app-key", nil); err == nil {
 				ddAppKey = cred.Value
 			}
 			if ddAppKey == "" {
-				out, err2 := exec.Command("security", "find-generic-password", "-s", "workflow-dd-app-key", "-a", "geraldothuler", "-w").Output()
+				val, err2 := secret.Get("workflow-dd-app-key")
 				if err2 != nil {
-					return fmt.Errorf("DD App key not found: %w", err2)
+					return fmt.Errorf("DD App key not found: %w\nhint: bash scripts/secret-set.sh workflow-dd-app-key <key>", err2)
 				}
-				ddAppKey = strings.TrimSpace(string(out))
+				ddAppKey = val
 			}
 
 			var names []string
@@ -1340,28 +1340,28 @@ Examples:
 			}
 			defer db.Close()
 
-			// Keychain fallback (same pattern as dd-enrich)
+			// Resolver first; cross-platform secret helper as fallback
 			resolver, _ := credentials.NewFullResolver(root, os.Getenv("WTB_MASTER_KEY"))
 			ddAPIKey, ddAppKey := "", ""
 			if cred, err2 := resolver.Resolve(cmd.Context(), "workflow-dd-api-key", nil); err2 == nil {
 				ddAPIKey = cred.Value
 			}
 			if ddAPIKey == "" {
-				out, err2 := exec.Command("security", "find-generic-password", "-s", "workflow-dd-api-key", "-a", "geraldothuler", "-w").Output()
+				val, err2 := secret.Get("workflow-dd-api-key")
 				if err2 != nil {
-					return fmt.Errorf("DD API key not found: %w\nhint: security add-generic-password -s workflow-dd-api-key -a geraldothuler -w <key>", err2)
+					return fmt.Errorf("DD API key not found: %w\nhint: bash scripts/secret-set.sh workflow-dd-api-key <key>", err2)
 				}
-				ddAPIKey = strings.TrimSpace(string(out))
+				ddAPIKey = val
 			}
 			if cred, err2 := resolver.Resolve(cmd.Context(), "workflow-dd-app-key", nil); err2 == nil {
 				ddAppKey = cred.Value
 			}
 			if ddAppKey == "" {
-				out, err2 := exec.Command("security", "find-generic-password", "-s", "workflow-dd-app-key", "-a", "geraldothuler", "-w").Output()
+				val, err2 := secret.Get("workflow-dd-app-key")
 				if err2 != nil {
-					return fmt.Errorf("DD App key not found: %w", err2)
+					return fmt.Errorf("DD App key not found: %w\nhint: bash scripts/secret-set.sh workflow-dd-app-key <key>", err2)
 				}
-				ddAppKey = strings.TrimSpace(string(out))
+				ddAppKey = val
 			}
 
 			var names []string

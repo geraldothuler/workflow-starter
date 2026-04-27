@@ -25,12 +25,12 @@ Lê os canais Slack de AI/ML e engenharia da Cobli, filtra o que é acionável, 
 /invite @workflow_toolbox   (em #sig-ai e #sig-agentic-coding)
 ```
 
-**Passo 3 — Salvar no Keychain:**
+**Passo 3 — Salvar no secret store (qualquer OS):**
 ```bash
-security add-generic-password -U -s "workflow-slack-channel-sig-ai" -a geraldothuler -w "<ID>"
-security add-generic-password -U -s "workflow-slack-channel-sig-agentic" -a geraldothuler -w "<ID>"
-security add-generic-password -U -s "workflow-slack-channel-engineering" -a geraldothuler -w "<ID>"
-security add-generic-password -U -s "workflow-slack-channel-colib-design-system" -a geraldothuler -w "<ID>"
+bash ~/workflow/scripts/secret-set.sh workflow-slack-channel-sig-ai "<ID>"
+bash ~/workflow/scripts/secret-set.sh workflow-slack-channel-sig-agentic "<ID>"
+bash ~/workflow/scripts/secret-set.sh workflow-slack-channel-engineering "<ID>"
+bash ~/workflow/scripts/secret-set.sh workflow-slack-channel-your-company-design "<ID>"
 ```
 
 IDs atuais: sig-ai=`C072CR23K32`, sig-agentic=`C08MVTM0RDM`, engineering=`C03AVHBFGBG`, colib-design-system=`C070ERVN2TU`
@@ -63,11 +63,11 @@ wtb doc list --type reference --tag "ai-radar,rejected"
 ### 1. Leitura dos canais (últimos 7 dias por padrão)
 
 ```bash
-TOKEN=$(security find-generic-password -s "workflow-slack-token" -w)
-CH1=$(security find-generic-password -s "workflow-slack-channel-sig-ai" -w)
-CH2=$(security find-generic-password -s "workflow-slack-channel-sig-agentic" -w)
-CH3=$(security find-generic-password -s "workflow-slack-channel-engineering" -w)
-CH4=$(security find-generic-password -s "workflow-slack-channel-colib-design-system" -w)
+TOKEN=$(bash ~/workflow/scripts/secret-get.sh workflow-slack-token)
+CH1=$(bash ~/workflow/scripts/secret-get.sh workflow-slack-channel-sig-ai)
+CH2=$(bash ~/workflow/scripts/secret-get.sh workflow-slack-channel-sig-agentic)
+CH3=$(bash ~/workflow/scripts/secret-get.sh workflow-slack-channel-engineering)
+CH4=$(bash ~/workflow/scripts/secret-get.sh workflow-slack-channel-your-company-design)
 SINCE=$(python3 -c "import time; print(int(time.time() - 7*86400))")
 
 for CH in $CH1 $CH2 $CH3 $CH4; do

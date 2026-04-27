@@ -114,10 +114,12 @@ Todo artefato vai para `~/workflow/` (este repo). A única exceção são **valo
 | Session state | `session.yml` (gitignored) |
 | Calibrações e premissas | `wtb doc get premissas-da-colabora-o-geraldo-claude-code` |
 
-**Credenciais → Keychain:**
+**Credenciais → secret store (macOS Keychain / GNOME Keyring / pass / env):**
 ```bash
-# Ler: security find-generic-password -s "<service>" -a <your-username> -w
-# Gravar: security add-generic-password -s "<service>" -a <your-username> -w "<valor>"
+# Ler (qualquer OS):   bash ~/workflow/scripts/secret-get.sh <service>
+# Gravar (qualquer OS): bash ~/workflow/scripts/secret-set.sh <service> <valor>
+# macOS legado direto: security find-generic-password -s "<service>" -a "$USER" -w
+# Env var fallback:    WORKFLOW_SECRET_<SERVICE_UPPER>=<valor>
 ```
 Serviços registrados: `workflow-dd-api-key`, `workflow-dd-app-key`, `workflow-slack-token`.
 
@@ -270,28 +272,82 @@ Convenção de IDs: `NNN-<context>-YYYY-MM-DD` (zero-padded). Regras de placemen
 > Fallback manual: `cd ~/workflow && wtb <cmd>`.
 
 ```bash
-wtb status                               # status
-wtb run ops-response                     # workflow ops completo
-wtb ops db-health --namespace org        # probe individual
-wtb mcp-serve                            # MCP server para Claude Code
-wtb new incident <context> --repo <path> # scaffolding
-wtb cycle-check --save --repo <path>     # savepoint
-bash ~/workflow/scripts/memory-observer.sh --repo <path> [--hours N]  # Session Exit: propõe wtb memory set
-bash ~/workflow/scripts/db-backup.sh                                  # Session Exit: health check SQLite + backup .db
+# ── Status e ciclo ──────────────────────────────────────────────────────────
+wtb status                               # resumo de ~/.workflow/
+wtb cycle-check --save --repo <path>     # savepoint de fim de ciclo
+wtb guardrail                            # detecta drift de YAML/framework
+bash ~/workflow/scripts/memory-observer.sh --repo <path> [--hours N]
+bash ~/workflow/scripts/db-backup.sh
+
+# ── Workflows e agentes ─────────────────────────────────────────────────────
+wtb run <use-case> [--input k=v ...]     # executa pipeline use-case
+wtb run ops-response --input symptom="CDC lag"
+wtb agent list                           # lista use-cases type:agent
+wtb agent spec <id> [--input k=v ...]   # exibe bloco spawn_agent renderizado
+wtb chain next <use-case-id>             # segue chain.to de use-case documental
+wtb new incident <context> --repo <path> # scaffolding de artefato
+wtb docs generate <use-case-id>          # gera documentação de use-case
+
+# ── Memória ─────────────────────────────────────────────────────────────────
 wtb memory get <topic>                   # carrega arquivo de tópico
 wtb memory where "<descrição>"           # roteia onde armazenar um fato
-wtb memory set <key> <val> --type --topic --desc  # armazena fato estruturado
-wtb memory list [--topic <t>] [--stale N]         # lista context.json
+wtb memory set <key> <val> --type --topic --desc
+wtb memory list [--topic <t>] [--stale N]
 wtb memory validate                      # guardrails bloat + content-leak
-wtb backlog list [--status S] [--repo R] [--tag T] [--jira J]  # tarefas ativas
-wtb backlog search <keyword>             # busca full-text no DB
-wtb backlog add --title "..." [flags]    # nova tarefa
-wtb backlog done/block/start <id>        # transição de status
-wtb doc list [--type T] [--since D] [--repo R] [--tag T]  # artefatos (discovery, savepoint, runbook, 1on1)
-wtb doc search <keyword>                 # busca full-text
-wtb doc get <id>                         # conteúdo completo
-wtb doc import <dir> --type T [-r]       # importar diretório
-wtb doc delete <id>                      # soft-delete
+wtb memory append --topic <t> "<texto>"  # narrativa em topic file
+
+# ── Backlog ─────────────────────────────────────────────────────────────────
+wtb backlog list [--status S] [--repo R] [--tag T] [--jira J]
+wtb backlog search <keyword>
+wtb backlog add --title "..." [flags]
+wtb backlog done/block/start <id>
+
+# ── Docs (discovery, savepoint, runbook, 1on1…) ─────────────────────────────
+wtb doc list [--type T] [--since D] [--repo R] [--tag T]
+wtb doc search <keyword>
+wtb doc get <id>
+wtb doc add --type <T> --title "..." --date YYYY-MM-DD [--file <path>]
+wtb doc import <dir> --type T [-r]
+wtb doc delete <id>
+wtb doc template get <type>              # template para type (stored em docs.db)
+wtb doc template set <type> --file <path>
+
+# ── Repoindex ───────────────────────────────────────────────────────────────
+wtb repo show <name>                     # snapshot completo (handlers, models, APIs, events)
+wtb repo list                            # repos indexados
+wtb repo status [--stale N]             # saúde dos índices — sinaliza defasados
+wtb repo grep "<pattern>" [--repo <r>]  # busca regexp em código fonte
+wtb repo impact <repo1> [repo2 ...]     # análise de impacto de merge
+wtb repo topology                        # mapa producer→topic→consumer
+wtb repo canvas [<name>]                 # visão de migração (5 eixos)
+wtb repo query "<sql>"                   # SQL direto em repos.duckdb
+wtb repo similar <name>                  # repos semanticamente similares
+wtb repo index <name> --path <path>      # (re)indexa um repo
+wtb repo dd-metrics --all --stale 20     # atualiza métricas DD
+wtb repo dd-enrich  --all --stale 20     # atualiza monitors DD
+
+# ── Ops Toolbox (zero-LLM) ─────────────────────────────────────────────────
+wtb ops probe --namespace <ns>           # todos os probes: auth+DB+k8s+Kafka
+wtb ops db-health --namespace <ns>       # health de banco (PostgreSQL/Scylla)
+wtb ops k8s-status --namespace <ns> --deployment <d>
+wtb ops kafka-status --namespace <ns>
+wtb ops logs-analyze --file <path> --patterns kafka,oom
+wtb ops github --repo owner/repo --scope pr|ci|issues|releases
+wtb ops jira --url <url> --email <e> --token <t> --project <p>
+wtb ops slack --token <tok> --channel <ch>
+wtb ops snowflake --account <a> --user <u> --query "<sql>"
+wtb ops airbyte --url <url> --workspace-id <ws>
+wtb ops plan new --template <tpl> --scenario "<desc>"
+wtb ops plan show / execute
+wtb store trend <probe> [--last N]       # histórico de probes (ops-log.db)
+
+# ── Infra do daemon e MCP ───────────────────────────────────────────────────
+wtb serve [--mcp-port 7654] [--daemon]   # daemon: Unix socket + MCP HTTP
+wtb mcp-serve                            # MCP stdio (para Claude Code settings.json)
+wtb webhook status / setup               # gestão de webhook ingestion
+
+# ── Monitoramento ───────────────────────────────────────────────────────────
+wtb monitor slack                        # poll Slack para sinais P0/P1 (zero-LLM)
 ```
 
 **Regra de uso do `wtb memory`:**

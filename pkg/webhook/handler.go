@@ -12,7 +12,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
@@ -24,6 +23,7 @@ import (
 
 	"github.com/Cobliteam/workflow-toolkit/pkg/chain"
 	"github.com/Cobliteam/workflow-toolkit/pkg/runner"
+	"github.com/Cobliteam/workflow-toolkit/pkg/secret"
 )
 
 // ── Routing ───────────────────────────────────────────────────────────────────
@@ -158,12 +158,11 @@ func (t *headlessTerminal) CanAsk() bool { return false }
 // ── Keychain ──────────────────────────────────────────────────────────────────
 
 func keychainSecret(service string) (string, error) {
-	out, err := exec.Command("security", "find-generic-password",
-		"-s", service, "-a", "geraldothuler", "-w").Output()
+	val, err := secret.Get(service)
 	if err != nil {
-		return "", fmt.Errorf("keychain %q not found: %w", service, err)
+		return "", fmt.Errorf("secret %q not found: %w", service, err)
 	}
-	return strings.TrimSpace(string(out)), nil
+	return val, nil
 }
 
 // ── Handler ───────────────────────────────────────────────────────────────────

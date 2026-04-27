@@ -63,7 +63,7 @@ slack_search_public_and_private: query="in:#help-tech-account-mgm after:<data-in
 slack_search_public_and_private: query="in:#help-tech after:<data-inicio>"
 
 # Contribuições do Geraldo
-slack_search_public_and_private: query="from:geraldo.thuler after:<data-inicio>"
+slack_search_public_and_private: query="from:$WORKFLOW_SLACK_USER after:<data-inicio>"
 
 # Incidentes
 slack_search_public_and_private: query="in:#incidentes after:<data-inicio>"

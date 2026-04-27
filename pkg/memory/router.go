@@ -28,7 +28,7 @@ type RouteResult struct {
 func (r RouteResult) String() string {
 	switch r.Dest {
 	case DestKeychain:
-		return fmt.Sprintf("KEYCHAIN\n  key: %s\n  cmd: security add-generic-password -U -s %s -a geraldothuler -w <value>",
+		return fmt.Sprintf("KEYCHAIN\n  key: %s\n  cmd: bash ~/workflow/scripts/secret-set.sh %s <value>",
 			r.KeySuggestion, r.KeySuggestion)
 	case DestContextJSON:
 		return fmt.Sprintf("CONTEXT_JSON\n  key: %s\n  cmd: wtb memory set %s <value>%s",

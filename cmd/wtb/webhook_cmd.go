@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 	"time"
 
+	"github.com/Cobliteam/workflow-toolkit/pkg/secret"
 	"github.com/Cobliteam/workflow-toolkit/pkg/webhook"
 	"github.com/spf13/cobra"
 )
@@ -232,25 +232,11 @@ func randomHex(n int) (string, error) {
 }
 
 func keychainSet(service, value string) error {
-	err := exec.Command("security", "add-generic-password",
-		"-s", service, "-a", "geraldothuler", "-w", value).Run()
-	if err != nil {
-		// Already exists — delete and re-add
-		exec.Command("security", "delete-generic-password",
-			"-s", service, "-a", "geraldothuler").Run()
-		return exec.Command("security", "add-generic-password",
-			"-s", service, "-a", "geraldothuler", "-w", value).Run()
-	}
-	return nil
+	return secret.Set(service, value)
 }
 
 func keychainLookup(service string) (string, error) {
-	out, err := exec.Command("security", "find-generic-password",
-		"-s", service, "-a", "geraldothuler", "-w").Output()
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(string(out)), nil
+	return secret.Get(service)
 }
 
 func maskSecret(s string) string {

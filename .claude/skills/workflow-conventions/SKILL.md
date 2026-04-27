@@ -27,7 +27,7 @@ Everything goes in `~/workflow/` (the repo). The only exception is credential **
 | Go code, plan templates, use-case definitions | `pkg/`, `templates/`, `use-cases/` |
 | Named DB queries | `db-queries/<repo>.yml` |
 
-**Credential resolution chain:** `session.yml` → env var → Keychain (`security find-generic-password`) → prompt.
+**Credential resolution chain:** `session.yml` → env var → secret store (`secret-get.sh` — macOS Keychain / GNOME Keyring / pass) → prompt.
 Registered Keychain services: `workflow-dd-api-key`, `workflow-dd-app-key`, `workflow-slack-token`.
 
 ## Archiving rules

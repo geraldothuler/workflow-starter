@@ -3,11 +3,11 @@ package dbops
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/Cobliteam/workflow-toolkit/pkg/secret"
 	"gopkg.in/yaml.v3"
 )
 
@@ -170,8 +170,7 @@ func resolveCassandraCreds(rq *RepoQueries, repo, kubectlCtx string) (*DBCredent
 	creds, err := BootstrapCredentials(repo, rq.Namespace, "cassandra", kubectlCtx)
 	if err != nil {
 		return nil, fmt.Errorf("could not resolve cassandra credentials for %s: %w\n"+
-			"  → hint: store jupyter-read password: security add-generic-password "+
-			"-s workflow-scylla-jupyter-read -a geraldothuler -w '<pass>'",
+			"  → hint: bash ~/workflow/scripts/secret-set.sh workflow-scylla-jupyter-read '<pass>'",
 			repo, err)
 	}
 	if !ProbeVPN(creds.ContactPoints, "9042") {
@@ -197,12 +196,7 @@ func jupyterReadCreds() *DBCredentials {
 }
 
 func keychainLookup(service string) (string, error) {
-	out, err := exec.Command("security", "find-generic-password",
-		"-s", service, "-a", "geraldothuler", "-w").Output()
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(string(out)), nil
+	return secret.Get(service)
 }
 
 func applyParams(sql string, defs []ParamDef, provided map[string]string) string {

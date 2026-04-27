@@ -80,8 +80,8 @@ Sinais de alerta: `TARGETS` muito próximo de 100%, replicas em `MAXPODS`, event
 Usar MCP Datadog (via `/datadog-rca`) ou REST:
 
 ```bash
-DD_API_KEY=$(security find-generic-password -s workflow-dd-api-key -a geraldothuler -w)
-DD_APP_KEY=$(security find-generic-password -s workflow-dd-app-key -a geraldothuler -w)
+DD_API_KEY=$(bash ~/workflow/scripts/secret-get.sh workflow-dd-api-key)
+DD_APP_KEY=$(bash ~/workflow/scripts/secret-get.sh workflow-dd-app-key)
 NOW=$(date +%s); FROM=$((NOW - 900))  # últimos 15min
 
 # Latência p99 — cerberus-api (exemplo)
