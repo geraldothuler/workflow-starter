@@ -54,6 +54,7 @@ sanitize() {
   sed -i '' \
     -e 's/geraldo\.thuler@cobli\.co/<your-email>/g' \
     -e 's/geraldo\.thuler/<your-username>/g' \
+    -e 's/<your-username>/<your-username>/g' \
     -e 's/<Your Name>/<Your Name>/g' \
     -e 's/<Your Company>/<Your Company>/g' \
     -e 's|||g' \

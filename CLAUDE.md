@@ -116,8 +116,8 @@ Todo artefato vai para `~/workflow/` (este repo). A única exceção são **valo
 
 **Credenciais → Keychain:**
 ```bash
-# Ler: security find-generic-password -s "<service>" -a geraldothuler -w
-# Gravar: security add-generic-password -s "<service>" -a geraldothuler -w "<valor>"
+# Ler: security find-generic-password -s "<service>" -a <your-username> -w
+# Gravar: security add-generic-password -s "<service>" -a <your-username> -w "<valor>"
 ```
 Serviços registrados: `workflow-dd-api-key`, `workflow-dd-app-key`, `workflow-slack-token`.
 
