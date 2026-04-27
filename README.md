@@ -182,6 +182,30 @@ wtb memory set repoindex_stale_days 14 --type config --topic repoindex --desc "R
 
 ---
 
+## MCPs — multiplique o potencial do Claude
+
+MCPs (Model Context Protocol servers) são o maior diferencial deste stack. Sem eles, o Claude usa subprocess e parse de texto. Com eles, opera diretamente sobre dados estruturados — PR, CI, Jira, logs, Slack — sem intermediários.
+
+**Recomendação forte:** configure os MCPs relevantes antes de começar a usar no dia a dia.
+
+```bash
+/mcp-setup    # wizard interativo: detecta o que está faltando e guia a configuração
+```
+
+| MCP | Para que serve |
+|-----|---------------|
+| **GitHub** | PR review, CI checks, issues, deployments |
+| **Atlassian** | Jira, Confluence — criar, buscar, transicionar |
+| **Datadog** | Logs, métricas APM, traces, RCA |
+| **Slack** | Ler canais, buscar contexto, rascunhar mensagens |
+| **Notion** | Criar e atualizar documentação |
+| **Figma** | Leitura de designs, geração de código |
+| **Browser** | Automação, scraping, testes E2E |
+
+Referência completa: [`docs/guides/mcps.md`](docs/guides/mcps.md)
+
+---
+
 ## Guias de uso
 
 Os guias em `docs/guides/` cobrem os fluxos principais:
@@ -189,6 +213,7 @@ Os guias em `docs/guides/` cobrem os fluxos principais:
 | Guia | O que explica |
 |------|--------------|
 | `getting-started.md` | Primeira sessão, ativação, configuração inicial |
+| `mcps.md` | MCPs recomendados, por que usar, como configurar cada um |
 | `cycle-close.md` | Como encerrar uma sessão: CI, savepoint, memória, backup |
 | `ops-response.md` | Diagnóstico de incidente com 6 checks obrigatórios |
 | `yaml-driven-design.md` | Princípio YAML-first: quando Go, quando YAML |
