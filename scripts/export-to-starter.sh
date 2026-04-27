@@ -153,6 +153,16 @@ for f in "${MEMORY_GENERIC[@]}"; do
   sanitize ".claude/memory/$f"
 done
 
+# MEMORY.md do starter — índice genérico (sem dados operacionais Cobli)
+if $DRY_RUN; then
+  log "DRY: .claude/memory/MEMORY.md (from MEMORY.starter.md)"
+else
+  mkdir -p "$TARGET/.claude/memory"
+  cp "$REPO_ROOT/.claude/memory/MEMORY.starter.md" "$TARGET/.claude/memory/MEMORY.md"
+  sanitize ".claude/memory/MEMORY.md"
+  log "OK: .claude/memory/MEMORY.md"
+fi
+
 # Docs de metodologia (sem discoveries operacionais)
 copy "docs/workflow/platform"
 sanitize "docs/workflow/platform/REFERENCE.md"
