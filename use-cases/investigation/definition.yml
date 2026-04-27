@@ -1,0 +1,75 @@
+id: investigation
+type: pipeline
+name: Playbook Investigation
+version: "1.0"
+
+description: |
+  Investigação estruturada de causa raiz guiada por playbooks YAML.
+  Executa sequência de analyzers, constrói causal chain, gera relatório.
+  Tipicamente disparada durante ou após um incidente ativo.
+
+primitives:
+  - environment-probe    # coleta estado real do sistema (kubectl, kafka, psql)
+  - heuristic-first      # analyzers heurísticos zero-LLM executam primeiro
+  - adr-capture          # registra decisões e findings na causal chain
+
+triggers:
+  - incident_ongoing     # incidente ativo, investigação em paralelo
+  - incident_resolved    # pós-incidente, busca causa raiz
+  - anomaly_unexplained  # anomalia detectada sem causa óbvia
+
+inputs:
+  - name: playbook
+    description: "Nome do playbook a executar (ex: fusca-cdc-audit)"
+    required: true
+  - name: environment
+    description: "producao | staging | namespace"
+    required: true
+  - name: context_window
+    description: "Janela de tempo para análise (ex: 2h, 24h)"
+    required: false
+    default: "4h"
+
+steps:
+  - name: run_playbook
+    engine: pkg/playbook
+    description: Executa analyzers YAML-driven e constrói causal chain
+    output: .workflow/investigation/findings.json
+    input_mapping:
+      namespace:  "${namespace:-${environment}}"
+
+  - name: enrich_with_infra
+    engine: pkg/infracontext
+    description: Coleta estado atual de infra para correlacionar com findings
+    output: .workflow/investigation/infra-context.json
+    optional: true
+    input_mapping:
+      namespace: "${namespace:-${environment}}"
+      kubectl-context: "${kubectl-context}"
+
+  - name: render_report
+    engine: pkg/playbook
+    description: Renderiza relatório Markdown com causal chain e recomendações
+    output: docs/workflow/investigation/NNN-<context>-YYYY-MM-DD.md
+
+artefacts:
+  - name: investigation_report
+    format: "NNN-<context>-YYYY-MM-DD.md"
+    destination: "docs/workflow/investigation/NNN-<context>-YYYY-MM-DD/"
+  - name: causal_chain
+    format: "causal-chain.json"
+    destination: ".workflow/investigation/"
+
+naming_convention: "NNN-<context>-YYYY-MM-DD"
+nnn_padding: 3
+
+chain:
+  from:
+    - incident        # disparado pelo savepoint do incidente
+    - ops-response    # ops plan identificou necessidade de investigação profunda
+  to:
+    - postmortem      # findings viram input do postmortem
+
+guidance:
+  playbooks_dir: "pkg/playbook/config/"
+  primitives_ref: "~/workflow/_core/metacognition.md"

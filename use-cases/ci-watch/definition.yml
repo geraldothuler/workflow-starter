@@ -1,0 +1,110 @@
+id: ci-watch
+type: technical
+name: CI Watch — Sentinel e Auto-Fix
+version: "1.0"
+
+description: |
+  Monitora o resultado de um CI check-run em um PR ou commit e,
+  ao detectar falha por ktlint, tenta resolver automaticamente via
+  ktlintFormat antes de reportar ao operador.
+
+  Comportamento:
+  - Poll de check-runs via gh api até todos completarem (ou timeout)
+  - Heurística de falha: duração < ktlint_max_duration_seconds → ktlint/compile
+  - Se Kotlin + Gradle detectados: executa ktlintFormat → ktlintCheck
+  - Se ktlintCheck passa: commit + push automático (auto-fix concluído)
+  - Se ktlintCheck ainda falha: reporta violações restantes ao operador
+  - Para outras falhas (test, compile não-ktlint): reporta sem auto-fix
+
+primitives:
+  - heuristic-first     # detecção de tipo de falha por duração, zero LLM
+  - adr-capture         # registra padrão de sentinel como artefato reutilizável
+
+triggers:
+  - ci_falhou_em_pr            # check-run retornou failure no GitHub
+  - ktlint_suspeito            # CI falhou em menos de 8 min (heurística)
+  - push_recente_sem_format    # commit feito sem rodar ktlintFormat antes
+
+inputs:
+  - name: repo
+    description: "Repositório no formato owner/repo (ex: Cobliteam/webhook)"
+    required: true
+    why_ask: "Identifica o repositório onde o CI está rodando"
+    resolve: [session, ask]
+
+  - name: pr
+    description: "Número do PR a monitorar (ex: 63)"
+    required: false
+    why_ask: "Resolve o commit HEAD do PR automaticamente"
+    resolve: [ask]
+
+  - name: commit
+    description: "SHA do commit a monitorar (alternativa ao pr)"
+    required: false
+    why_ask: "Usado quando não há PR (push direto)"
+    resolve: [ask]
+
+  - name: local_path
+    description: "Path local do repositório para rodar ktlintFormat (ex: ~/Cobliteam/webhook)"
+    required: false
+    why_ask: "Necessário para auto-fix. Se ausente, só monitora."
+    resolve: [session, ask]
+
+steps:
+  - name: sentinel_poll
+    engine: shell
+    description: |
+      Poll via gh api até todos os check-runs completarem.
+      Comando de referência no guide.md — executado diretamente no terminal.
+    command_ref: guide.md#sentinel
+
+  - name: detect_failure_type
+    engine: heuristic
+    description: |
+      Classifica a falha por duração:
+      - duração < 480s → ktlint ou compile (candidato a auto-fix)
+      - duração >= 480s → falha de teste (reportar ao operador)
+    config_ref: config/ci_watch.yml
+
+  - name: auto_fix_ktlint
+    engine: plan
+    plan: ci-fix-ktlint
+    condition: "failure_type == ktlint AND local_path defined"
+    description: |
+      Executa o plan template ci-fix-ktlint:
+      ktlintFormat → ktlintCheck → commit → push.
+      Step de commit é type: human — aguarda confirmação.
+
+  - name: report
+    engine: manual
+    description: |
+      Se auto-fix resolveu: sinaliza CI verde esperado em próximo push.
+      Se restaram violações: lista arquivo:linha:regra para correção manual.
+
+config:
+  file: "use-cases/ci-watch/config/ci_watch.yml"
+
+artefacts:
+  - name: fix_commit
+    format: "git commit (mensagem automática)"
+    destination: "branch do PR"
+    optional: true   # só existe se auto-fix ocorreu
+
+chain:
+  from:
+    - qualquer_pr_com_ci_falho
+  to:
+    - merge_do_pr    # quando CI passa após fix
+    - postmortem     # se padrão de falha for recorrente e vale documentar
+
+guidance:
+  when_to_use: |
+    Use imediatamente após um push que resultou em CI failure.
+    Especialmente útil para falhas rápidas (< 8min) em projetos Kotlin.
+  when_not_to_use: |
+    Não use para falhas de infraestrutura de CI (runner down, rede, etc.).
+    Não use quando o log de CI aponta claramente para falha de teste — vá direto ao diagnóstico.
+  auto_fix_contract: |
+    ktlintFormat é idempotente e determinístico — auto-fix é seguro.
+    O step de commit é sempre type: human — nunca commita sem confirmação.
+    Para qualquer outro tipo de falha, ci-watch só reporta, nunca age.

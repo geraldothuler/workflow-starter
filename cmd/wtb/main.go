@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Cobliteam/workflow-toolkit/pkg/agent"
 	"github.com/Cobliteam/workflow-toolkit/pkg/chain"
 	"github.com/Cobliteam/workflow-toolkit/pkg/mcp"
 	"github.com/Cobliteam/workflow-toolkit/pkg/runner"
@@ -83,6 +84,8 @@ Ops Toolbox (acesso direto, zero-LLM):
 	root.AddCommand(
 		// Pipeline runner
 		newRunCmd(),
+		// Agent use-cases: list and inspect
+		newAgentCmd(),
 		// Chain traversal for documentary use-cases
 		newChainCmd(),
 		// Webhook management
@@ -743,6 +746,11 @@ Examples:
 				return err
 			}
 
+			// Agent use-cases are not runnable via wtb run — redirect early.
+			if def.IsAgent() {
+				return fmt.Errorf("use-case %q is an agent — use 'wtb agent spec %s' to inspect it, or call workflow_run via MCP", useCaseID, useCaseID)
+			}
+
 			// Build inputs: parse all --input key=value pairs.
 			inputs := runner.RunInputs{}
 			for _, inp := range flagInputs {
@@ -817,6 +825,71 @@ Examples:
 	cmd.Flags().StringVar(&flagProvider, "provider", "", "LLM provider (claude|chatgpt|gemini|ollama|azure)")
 	cmd.Flags().StringVar(&flagEnv, "env", "", "Environment (production|staging|namespace)")
 
+	return cmd
+}
+
+// agent — list and inspect agent use-cases
+func newAgentCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "agent",
+		Short: "List and inspect agent-type use-cases",
+	}
+
+	// agent list
+	listCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List all agent-type use-cases",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			home := workflowDirPath()
+			ids, err := runner.ListUseCases(home)
+			if err != nil {
+				return err
+			}
+			found := 0
+			for _, id := range ids {
+				def, err := runner.LoadDefinition(home, id)
+				if err != nil || !def.IsAgent() {
+					continue
+				}
+				fmt.Printf("%-30s  bg=%-5v  %s\n", def.ID, def.Agent.Background, def.Name)
+				found++
+			}
+			if found == 0 {
+				fmt.Println("no agent use-cases found (add use-cases/<id>/definition.yml with type: agent)")
+			}
+			return nil
+		},
+	}
+
+	// agent spec <id> — render the spawn_agent block with sample inputs
+	var flagInputs []string
+	specCmd := &cobra.Command{
+		Use:   "spec <use-case-id>",
+		Short: "Print the spawn_agent block that would be emitted for an agent use-case",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			home := workflowDirPath()
+			def, err := runner.LoadDefinition(home, args[0])
+			if err != nil {
+				return err
+			}
+			if !def.IsAgent() {
+				return fmt.Errorf("%q is type %q, not an agent use-case", args[0], def.Type)
+			}
+			inputs := runner.RunInputs{}
+			for _, inp := range flagInputs {
+				if k, v, ok := strings.Cut(inp, "="); ok {
+					inputs[k] = v
+				}
+			}
+			description, prompt := agent.Render(def.Agent, inputs)
+			fmt.Print(agent.FormatRequest(def.Agent, description, prompt))
+			return nil
+		},
+	}
+	specCmd.Flags().StringSliceVarP(&flagInputs, "input", "i", nil, "key=value inputs (repeatable)")
+
+	cmd.AddCommand(listCmd, specCmd)
 	return cmd
 }
 

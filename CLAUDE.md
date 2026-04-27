@@ -112,14 +112,14 @@ Todo artefato vai para `~/workflow/` (este repo). A única exceção são **valo
 | Backlog e tarefas | `backlog.db` → `wtb backlog` |
 | Discoveries, savepoints, runbooks, 1on1, postmortem, incident, review | `docs.db` → `wtb doc` |
 | Session state | `session.yml` (gitignored) |
-| Calibrações e premissas | `wtb doc search premissas` → `wtb doc get <id>` |
+| Calibrações e premissas | `wtb doc get premissas-da-colabora-o-geraldo-claude-code` |
 
 **Credenciais → Keychain:**
 ```bash
-# Ler: security find-generic-password -s "<service>" -a $(whoami) -w
-# Gravar: security add-generic-password -s "<service>" -a $(whoami) -w "<valor>"
+# Ler: security find-generic-password -s "<service>" -a <your-username> -w
+# Gravar: security add-generic-password -s "<service>" -a <your-username> -w "<valor>"
 ```
-Registrar serviços conforme MCPs utilizados (ex: `workflow-dd-api-key`, `workflow-slack-token`, `workflow-github-token`).
+Serviços registrados: `workflow-dd-api-key`, `workflow-dd-app-key`, `workflow-slack-token`.
 
 ---
 
@@ -134,7 +134,10 @@ Handoffs não são obrigatórios — incidente simples não precisa de investiga
 Artefatos: `docs.db` → `wtb doc add --type <tipo>`
 
 ### Code Review Rule
-Todo code review — seja iniciado pelo usuário, por `pr-ready`, por `ci-fix` agent ou qualquer outro fluxo — deve usar o skill de review configurado para o projeto. Nunca chamar `coderabbit:code-review` diretamente sem antes verificar se há um skill de review customizado em `.claude/skills/`.
+Todo code review em repos Cobli — seja iniciado pelo usuário, por `pr-ready`, por `ci-fix` agent ou qualquer outro fluxo — **DEVE usar `/cobli-review`**, nunca `coderabbit:code-review` diretamente.
+- `/cobli-review` → review padrão (best-practices + sub-skills + CodeRabbit)
+- `/cobli-review --deep` → PRs de feature grande ou mudança de contrato (adiciona 3 agentes paralelos)
+- `/cobli-review --no-coderabbit` → quando CodeRabbit já foi rodado no ciclo
 
 ### Grill-Me Rule
 Antes de iniciar qualquer plano de implementação não trivial: **invocar `/grill-me`** para validar decisões de design antes de escrever código. Não esperar o usuário pedir explicitamente.
@@ -194,7 +197,7 @@ Agent(
 
 ### PR-per-Commit Rule
 Cada commit com testes passando e funcionalidade verificada → **PR imediato** — não acumular commits locais.
-- Criar branch antes do commit: `feat/<context>` ou `feat/TICKET-XXXX-<description>`
+- Criar branch antes do commit: `feat/<context>` ou `feat/SS-XXXX-<description>`
 - Push + `gh pr create` logo após o commit
 - Seguir Push Rule após o merge (CI verde obrigatório)
 - Commits de savepoint e docs podem agrupar em um único PR se forem da mesma sessão
@@ -210,9 +213,9 @@ Precedência: `definition.yml` > `session.yml` > Push Rule > Socratic ask.
 - Dev regular → risco aceitável → prosseguir (Push Rule aplica)
 
 ### PR Traceability Rule
-Branch com ticket ID (`feat/TICKET-XXXX-*`) → Jira/Linear GitHub App linka automaticamente.
-Template: seções `## O que muda`, `## Por que`, `## Rastreabilidade` (com link para o ticket), `## Como testar`.
-Workflow docs: adicionar `tickets: [TICKET-XXXX]` no frontmatter quando o doc fecha um ticket.
+Branch com ticket ID (`feat/ss-2273-*`) → Jira GitHub App linka automaticamente.
+Template: seções `## O que muda`, `## Por que`, `## Rastreabilidade` (com link Jira `[SS-XXXX](https://cobliteam.atlassian.net/browse/SS-XXXX)`), `## Como testar`.
+Workflow docs: adicionar `jira_tickets: [SS-XXXX]` no frontmatter quando o doc fecha um ticket.
 
 ### Session Exit Rule
 Ao encerrar: CI verde? → `wtb cycle-check --repo <path>` → se `git_changes > 0`: propor savepoint + atualizar `backlog.md` → aguardar confirmação do usuário.
@@ -240,7 +243,7 @@ Convenção de IDs: `NNN-<context>-YYYY-MM-DD` (zero-padded). Regras de placemen
 **Ao iniciar qualquer workflow:**
 0. `cd ~/workflow` — garantir CWD correto (ou confirmar `WTB_REPO_ROOT` carregado no shell)
 1. Carregar `session.yml` como contexto ativo
-2. Carregar premissas: `wtb doc search premissas` → `wtb doc get <id>`
+2. Carregar premissas: `wtb doc get premissas-da-colabora-o-geraldo-claude-code`
 3. Para 1on1: registrar nova sessão com `wtb doc add --type 1on1 --title "..." --date YYYY-MM-DD --file <path>`
 4. **AI Radar:** verificar se já rodou hoje:
    ```bash
@@ -278,7 +281,7 @@ bash ~/workflow/scripts/db-backup.sh                                  # Session 
 wtb memory get <topic>                   # carrega arquivo de tópico
 wtb memory where "<descrição>"           # roteia onde armazenar um fato
 wtb memory set <key> <val> --type --topic --desc  # armazena fato estruturado
-wtb memory list [--topic <t>] [--stale N]         # lista entradas de memória no docs.db
+wtb memory list [--topic <t>] [--stale N]         # lista context.json
 wtb memory validate                      # guardrails bloat + content-leak
 wtb backlog list [--status S] [--repo R] [--tag T] [--jira J]  # tarefas ativas
 wtb backlog search <keyword>             # busca full-text no DB
@@ -294,9 +297,9 @@ wtb doc delete <id>                      # soft-delete
 **Regra de uso do `wtb memory`:**
 - Ao aprender novo fato operacional: `wtb memory where "<descrição>"` → seguir recomendação
 - Para carregar contexto de tópico: `wtb memory get <topic>` (alias do topic-map.yml)
-- Credenciais e IDs → sempre Keychain, nunca em arquivo commitado
-- **Antes de qualquer ação com threshold/limite:** `wtb memory list --topic <topic>` — nunca usar valor literal de skill ou heurística sem verificar docs.db primeiro
-- Skills e heurísticas referenciam chaves por nome — o valor canônico está no docs.db
+- Credenciais e IDs → sempre Keychain, nunca context.json
+- **Antes de qualquer ação com threshold/limite:** `wtb memory list --topic <topic>` — nunca usar valor literal de skill ou heurística sem verificar context.json primeiro
+- Skills e heurísticas referenciam chaves (`context.json: <key>`), não valores — o valor canônico está no context.json
 
 Referência técnica: `wtb doc get platform-reference-workflow-toolkit`
 Pendências e estado: `wtb backlog list`

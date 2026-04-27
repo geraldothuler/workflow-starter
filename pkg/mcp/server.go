@@ -6,7 +6,7 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 )
 
-// NewServer creates and configures the workflow MCP server with all 22 tools.
+// NewServer creates and configures the workflow MCP server with all 40 tools.
 //
 // workflowHome is the platform directory (~/workflow).
 // repoPath is the default target repo for scaffold/index operations (may be
@@ -24,6 +24,8 @@ func NewServer(workflowHome, repoPath string) *server.MCPServer {
 	registerOpsTools(s)
 	registerPlaybookTools(s, workflowHome)
 	registerStatusTools(s, workflowHome)
+	registerDocMemoryTools(s, workflowHome)
+	registerRepoIndexTools(s, workflowHome)
 
 	return s
 }

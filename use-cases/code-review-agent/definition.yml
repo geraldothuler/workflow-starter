@@ -1,0 +1,50 @@
+id: code-review-agent
+type: agent
+name: Code Review Agent
+version: "1.0"
+
+description: |
+  Spawns a code reviewer agent to perform a thorough analysis of a PR or branch.
+  Checks for correctness, security issues, test coverage, and conventions.
+
+  Runs in foreground — waits for the review. Use before merging any non-trivial PR.
+
+triggers:
+  - pr_opened
+  - pr_ready_for_review
+  - merge_gate
+
+inputs:
+  - name: pr_number
+    description: "PR number to review (e.g. 42)"
+    required: false
+    resolve: [ask]
+
+  - name: repo
+    description: "Repo name"
+    required: false
+    resolve: [session, ask]
+
+  - name: focus
+    description: "Review focus: general | security | performance | test-coverage"
+    required: false
+    default: "general"
+    resolve: [ask]
+
+agent:
+  subagent_type: coderabbit:code-reviewer
+  background: false
+  description_template: "Code review PR #${pr_number:-branch} on ${repo:-this repo}"
+  prompt_template: |
+    Review PR #${pr_number} on ${repo:-this repo}.
+    Focus: ${focus:-general}
+
+    Perform a thorough code review: check for correctness, security vulnerabilities,
+    test coverage, and adherence to conventions. Report findings grouped by severity
+    (blocking / non-blocking / informational). Post review comments on GitHub when done.
+
+chain:
+  from:
+    - plan-agent
+  to:
+    - ci-fix-agent

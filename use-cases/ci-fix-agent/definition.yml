@@ -1,0 +1,44 @@
+id: ci-fix-agent
+type: agent
+name: CI Fix Agent
+version: "1.0"
+
+description: |
+  Spawns a background agent that watches CI, runs code review, fixes findings,
+  and pushes until the PR is green and unblocked.
+
+  Trigger immediately after gh pr create or git push on an open PR.
+  The agent runs in background — continue working while it runs.
+
+triggers:
+  - after_pr_create
+  - after_git_push_on_open_pr
+
+inputs:
+  - name: pr_number
+    description: "PR number (e.g. 42)"
+    required: true
+    resolve: [ask]
+
+  - name: branch
+    description: "Branch name (e.g. feat/SS-1234-add-cache)"
+    required: false
+    resolve: [session, ask]
+
+  - name: repo
+    description: "Repo name (e.g. my-service)"
+    required: false
+    resolve: [session, ask]
+
+agent:
+  subagent_type: ci-fix
+  background: true
+  description_template: "CI fix + code review PR #${pr_number:-?}"
+  prompt_template: |
+    PR #${pr_number} ${branch:-} on ${repo:-this repo} — verify CI via gh pr checks,
+    run code review, fix critical findings, push.
+    Repeat until CI green and no blocking findings.
+
+chain:
+  from:
+    - ci-watch

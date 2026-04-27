@@ -1,0 +1,117 @@
+id: poc
+type: documentary
+name: Proof of Concept
+version: "1.0"
+
+description: |
+  Validação de uma hipótese com critério de sucesso explícito e decisão registrada.
+  Vive entre discovery e implementação — experimento com time-box definido.
+  Diferente de discovery (exploratório): tem hipótese fechada, critério mensurável e decisão binária.
+
+primitives:
+  - socratic-probe       # clarifica hipótese e critério de sucesso antes de executar
+  - options-scoring      # avalia resultado contra critério
+  - adr-capture          # registra decisão como artefato
+
+triggers:
+  - discovery_com_hipotese   # discovery concluiu, hipótese definida, validação pendente
+  - experimento_curto        # experimento < 8h viável antes de implementar
+  - decisao_binaria          # sucesso/falha define próximo passo de forma determinística
+
+inputs:
+  - name: hypothesis
+    description: "Hipótese a validar (ex: X resolve Y se Z)"
+    required: true
+    why_ask: "Hipótese direciona método e critério de sucesso — sem ela, não é PoC, é discovery"
+    resolve: [ask]
+  - name: success_criteria
+    description: "Critério de sucesso mensurável (ex: retorna 3 docs corretos, latência < 200ms)"
+    required: true
+    why_ask: "Sem critério definido não há como avaliar o resultado"
+    resolve: [ask]
+  - name: origin_discovery
+    description: "Discovery de origem (ex: discovery/009)"
+    required: false
+    resolve: [ask]
+  - name: time_box
+    description: "Tempo máximo para o experimento (ex: 2h, 4h)"
+    required: false
+    default: "4h"
+    why_ask: "Time-box evita PoC que vira projeto"
+    resolve: [ask]
+
+steps:
+  - name: define-hypothesis
+    engine: manual
+    human_checkpoint: true
+    description: "Registra hipótese, critério de sucesso e time-box no frontmatter do artefato"
+    output: "docs/workflow/poc/NNN-<context>-YYYY-MM-DD.md"
+
+  - name: run-experiment
+    engine: manual
+    description: "Executa o menor experimento possível dentro do time-box"
+
+  - name: evaluate
+    engine: manual
+    description: "Avalia resultado observado contra critério de sucesso"
+
+  - name: record-decision
+    engine: manual
+    human_checkpoint: true
+    description: "Registra decisão (success/failure/partial) e handoff no artefato"
+
+artefacts:
+  - name: poc_doc
+    format: "NNN-<context>-YYYY-MM-DD.md"
+    destination: "docs/workflow/poc/"
+
+naming_convention: "NNN-<context>-YYYY-MM-DD"
+nnn_padding: 3
+
+chain:
+  from:
+    - discovery            # validação de hipótese levantada em discovery
+  to:
+    - review               # sucesso → revisão + implementação
+    - postmortem           # falha controlada com aprendizado registrado
+    - discovery            # parcial → novos unknowns → novo discovery (bidirecional)
+
+guidance:
+  when_to_use: |
+    Use quando uma hipótese clara e mensurável precisa ser validada antes de
+    comprometer implementação completa. Diferente de discovery (exploratório),
+    o PoC tem critério de sucesso predefinido e decisão binária (success/failure/partial).
+    Não use para: exploração aberta → discovery. Anomalia prod → incident.
+  template: |
+    ---
+    type: poc
+    id: NNN
+    hypothesis: "X resolve Y se Z"
+    origin: discovery/NNN
+    success_criteria: "critério mensurável"
+    time_box: "Xh"
+    decision: pending | success | failure | partial
+    ---
+
+    ## Hipótese
+    [O que estamos validando e por quê]
+
+    ## Método
+    [Como vamos testar — menor experimento possível]
+
+    ## Critério de sucesso
+    [Mensurável, binário ou graduado]
+
+    ## Resultados
+    [O que foi observado]
+
+    ## Decisão
+    [success → handoff para review/implementação]
+    [failure → handoff para postmortem ou novo discovery]
+    [partial → abre discovery/NNN+1 com novos unknowns]
+  output_quality:
+    - "A hipótese está claramente formulada (X resolve Y se Z)?"
+    - "O critério de sucesso é mensurável?"
+    - "O time-box foi respeitado?"
+    - "A decisão está registrada com handoff explícito?"
+  primitives_ref: "~/workflow/_core/metacognition.md"

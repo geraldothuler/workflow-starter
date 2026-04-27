@@ -195,8 +195,8 @@ func ListRepos(db *DB) ([]Repo, error) {
 }
 
 // QueryRows executes a raw SQL query and returns column names + rows as string slices.
-func QueryRows(db *DB, query string) ([]string, [][]string, error) {
-	rows, err := db.sql.Query(query)
+func QueryRows(db *DB, query string, args ...any) ([]string, [][]string, error) {
+	rows, err := db.sql.Query(query, args...)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -193,6 +193,11 @@ func (r *Runner) Run(inputs RunInputs) ([]StepResult, error) {
 		}
 	}
 
+	if r.def.IsAgent() {
+		return nil, fmt.Errorf("use-case %q is an agent — use 'wtb agent spec %s' to inspect it, or call workflow_run via MCP",
+			r.def.ID, r.def.ID)
+	}
+
 	if !r.def.IsPipeline() {
 		// Documentary use-cases have no steps — scaffolding is handled by wtb new.
 		return nil, fmt.Errorf("use-case %q (type: %s) has no executable steps; use 'wtb new %s' to scaffold artefacts",

@@ -26,50 +26,20 @@ wtb cycle-check --save --repo <path>
 
 ```mermaid
 flowchart TD
-    A[memory-observer.sh] --> B[wtb memory set / topic files]
-    B --> C[db-backup.sh]
-    C --> D{DBs saudáveis?}
-    D -->|sim| E[wtb cycle-check --save]
-    D -->|não| F[investigar corrupção]
-    E --> G[wtb doc add --type savepoint]
+    A[/pod-cleanup] --> B[memory-observer.sh]
+    B --> C[editar topic files]
+    C --> D[db-backup.sh]
+    D --> E{DBs saudáveis?}
+    E -->|sim| F[wtb cycle-check --save]
+    E -->|não| G[investigar corrupção]
+    F --> H[commit: só savepoint .md]
 ```
 
-## Salvar savepoint
-
-Savepoints vivem **exclusivamente no `docs.db`** — nunca como arquivos `.md` commitados.
+## Regra de commit
 
 ```bash
-# 1. Verificar estado
-wtb cycle-check --repo ~/workflow
-
-# 2. Gravar savepoint técnico (sinais, score)
-wtb cycle-check --save --repo ~/workflow
-
-# 3. Adicionar savepoint rico (narrativo) ao docs.db
-wtb doc add --type savepoint --title "Savepoint YYYY-MM-DD — <contexto>" --date YYYY-MM-DD
+git add savepoints/YYYY-MM/savepoint-*.md
+git commit -m "docs(savepoint): <contexto> YYYY-MM-DD"
 ```
 
-Para consultar depois:
-
-```bash
-wtb doc list --type savepoint --since 2026-04-01
-wtb doc get <id>
-```
-
-## Atualizar memória
-
-```bash
-# 1. Observar o que foi aprendido na sessão
-bash ~/workflow/scripts/memory-observer.sh --repo <path> --hours 8
-
-# 2. Para cada fato novo confirmado
-wtb memory set <key> <valor> --type <threshold|config|fact> --topic <topic> --desc "..."
-```
-
-## Backup de DBs
-
-```bash
-bash ~/workflow/scripts/db-backup.sh
-```
-
-O script valida integridade de `docs.db` e `backlog.db` e cria backups datados. Se falhar, **não prosseguir** com o savepoint.
+Nunca bundlar outros arquivos modificados com o commit do savepoint.

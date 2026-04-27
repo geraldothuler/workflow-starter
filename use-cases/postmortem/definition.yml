@@ -1,0 +1,48 @@
+id: postmortem
+type: documentary
+name: Postmortem
+version: "1.0"
+
+primitives:
+  - adr-capture
+  - heuristic-first   # timeline a partir dos savepoints
+  - socratic-probe    # extrair licoes
+
+triggers:
+  - incident_closed_with_impact     # producao afetada, SLA impactado
+  - incident_closed_with_learning   # sem impacto mas com licao tecnica
+  - incident_repeated               # obrigatorio se repete
+
+inputs:
+  - name: incident_folder
+    description: "docs/workflow/incident/NNN-<context>-YYYY-MM-DD/ com todos os savepoints"
+    required: true
+  - name: impact_scope
+    description: Usuarios, tempo, dados — quantificado
+    required: true
+  - name: participants
+    description: Pessoas envolvidas por papel (nao por nome se PII)
+    required: false
+
+artefacts:
+  - name: postmortem_doc
+    format: "NNN-<context>-YYYY-MM-DD.md"
+    destination: "docs/workflow/postmortem/"
+    required_sections:
+      - Timeline
+      - Root Cause
+      - Impact
+      - Acoes Corretivas
+      - Licoes
+      - Chain
+
+naming_convention: "NNN-<context>-YYYY-MM-DD"
+nnn_padding: 3
+
+chain:
+  from:
+    - incident
+  to:
+    - review    # quando ha dimensao colaborativa
+
+index_entry: "| NNN | YYYY-MM-DD | [Titulo](./NNN-context-YYYY-MM-DD.md) | Concluido | link |"

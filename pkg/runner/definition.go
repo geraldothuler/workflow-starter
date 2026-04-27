@@ -12,7 +12,7 @@ import (
 // UseCaseDefinition is the parsed content of a use-cases/<type>/definition.yml.
 type UseCaseDefinition struct {
 	ID          string         `yaml:"id"`
-	Type        string         `yaml:"type"` // documentary | pipeline
+	Type        string         `yaml:"type"` // documentary | pipeline | agent
 	Name        string         `yaml:"name"`
 	Version     string         `yaml:"version"`
 	Description string         `yaml:"description"`
@@ -24,6 +24,16 @@ type UseCaseDefinition struct {
 	Chain       ChainSpec      `yaml:"chain"`
 	Naming      string         `yaml:"naming_convention"`
 	NNNPadding  int            `yaml:"nnn_padding"`
+	Agent       AgentSpec      `yaml:"agent"`
+}
+
+// AgentSpec is the agent: block in an agent-type use-case definition.
+// It describes the Claude Code sub-agent to spawn when the use-case is invoked.
+type AgentSpec struct {
+	SubagentType        string `yaml:"subagent_type"`
+	Background          bool   `yaml:"background"`
+	DescriptionTemplate string `yaml:"description_template"`
+	PromptTemplate      string `yaml:"prompt_template"`
 }
 
 // InputSpec describes a required or optional input for the use-case.
@@ -93,6 +103,11 @@ type ChainSpec struct {
 // IsPipeline returns true for use-cases that have executable steps.
 func (d *UseCaseDefinition) IsPipeline() bool {
 	return d.Type == "pipeline" && len(d.Steps) > 0
+}
+
+// IsAgent returns true for use-cases that spawn a Claude Code sub-agent.
+func (d *UseCaseDefinition) IsAgent() bool {
+	return d.Type == "agent"
 }
 
 // RequiredInputs returns only the inputs marked required: true.

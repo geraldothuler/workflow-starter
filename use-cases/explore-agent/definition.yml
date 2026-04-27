@@ -1,0 +1,45 @@
+id: explore-agent
+type: agent
+name: Codebase Explorer Agent
+version: "1.0"
+
+description: |
+  Spawns a focused exploration agent to map a codebase, find files by pattern,
+  trace call chains, or answer architectural questions.
+
+  Use for open-ended codebase questions that span multiple directories or require
+  chasing references across files. Runs in foreground — waits for the result.
+
+triggers:
+  - codebase_question
+  - pre_implementation_research
+
+inputs:
+  - name: question
+    description: "What to find or understand (e.g. 'how do API endpoints work?', 'find all Kafka consumers')"
+    required: true
+    resolve: [ask]
+
+  - name: thoroughness
+    description: "Exploration depth: quick | medium | very thorough"
+    required: false
+    default: "medium"
+    resolve: [ask]
+
+  - name: repo
+    description: "Repo path to explore"
+    required: false
+    resolve: [session, ask]
+
+agent:
+  subagent_type: Explore
+  background: false
+  description_template: "Explore: ${question}"
+  prompt_template: |
+    Explore the codebase at ${repo:-the current directory} to answer:
+    ${question}
+
+    Thoroughness: ${thoroughness:-medium}
+
+    Return a concise report with findings, relevant file paths (path:line),
+    and any patterns or anomalies worth noting.

@@ -1,0 +1,50 @@
+id: plan-agent
+type: agent
+name: Implementation Planner Agent
+version: "1.0"
+
+description: |
+  Spawns a software architect agent to design an implementation plan before
+  writing any code. Returns step-by-step plans, identifies critical files,
+  and surfaces architectural trade-offs.
+
+  Use before any non-trivial implementation to validate design decisions.
+  Runs in foreground — waits for the plan.
+
+triggers:
+  - before_non_trivial_implementation
+  - design_decision_needed
+
+inputs:
+  - name: task
+    description: "What needs to be built or changed (e.g. 'add retry logic to VehicleService')"
+    required: true
+    resolve: [ask]
+
+  - name: repo
+    description: "Repo path where the implementation will happen"
+    required: false
+    resolve: [session, ask]
+
+  - name: constraints
+    description: "Hard constraints or non-goals (e.g. 'no new dependencies', 'must be backward-compatible')"
+    required: false
+    resolve: [ask]
+
+agent:
+  subagent_type: Plan
+  background: false
+  description_template: "Plan: ${task}"
+  prompt_template: |
+    Design an implementation plan for: ${task}
+
+    Repo: ${repo:-current directory}
+    ${constraints:+Constraints: ${constraints}}
+
+    Explore the codebase, identify critical files and touch points,
+    surface architectural trade-offs, and return a numbered step-by-step plan.
+    Flag any risks or decisions that require confirmation before proceeding.
+
+chain:
+  to:
+    - ci-fix-agent

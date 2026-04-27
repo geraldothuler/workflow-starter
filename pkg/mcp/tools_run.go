@@ -9,6 +9,7 @@ import (
 	mcplib "github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 
+	"github.com/Cobliteam/workflow-toolkit/pkg/agent"
 	"github.com/Cobliteam/workflow-toolkit/pkg/chain"
 	"github.com/Cobliteam/workflow-toolkit/pkg/runner"
 )
@@ -23,7 +24,7 @@ func registerRunTools(s *server.MCPServer, workflowHome, repoPath string) {
 func toolWorkflowRun() mcplib.Tool {
 	return mcplib.Tool{
 		Name:        "workflow_run",
-		Description: "Execute a workflow use-case pipeline (backlog, ops-response, investigation). Runs all steps defined in use-cases/<id>/definition.yml.",
+		Description: "Execute a workflow use-case. For pipeline use-cases, runs steps defined in definition.yml. For agent use-cases (type: agent), returns a spawn_agent block — call Agent(...) with those params immediately.",
 		InputSchema: mcplib.ToolInputSchema{
 			Type: "object",
 			Properties: map[string]any{
@@ -61,6 +62,18 @@ func handleWorkflowRun(workflowHome, defaultRepo string) server.ToolHandlerFunc 
 		if err != nil {
 			ids, _ := runner.ListUseCases(workflowHome)
 			return mcplib.NewToolResultError(fmt.Sprintf("use-case %q not found. Available: %s", useCaseID, strings.Join(ids, ", "))), nil
+		}
+
+		// Agent use-cases: render prompt template and return spawn_agent spec.
+		// Claude reads this block and calls Agent(...) with the provided params.
+		if def.IsAgent() {
+			description, prompt := agent.Render(def.Agent, inputs)
+			summary := fmt.Sprintf("use_case: %s\ntype: agent\nstatus: ready", useCaseID)
+			summary += agent.FormatRequest(def.Agent, description, prompt)
+			if chainOpts := chain.FormatOptions(def); chainOpts != "" {
+				summary += chainOpts
+			}
+			return mcplib.NewToolResultText(summary), nil
 		}
 
 		opts := runner.RunOptions{

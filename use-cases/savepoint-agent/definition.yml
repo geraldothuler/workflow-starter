@@ -1,0 +1,46 @@
+id: savepoint-agent
+type: agent
+name: Savepoint Agent
+version: "1.0"
+
+description: |
+  Spawns a background agent to close the current work cycle: clean up ephemeral
+  resources, update memory, back up databases, and create a savepoint.
+
+  Trigger at the end of a session or when a stable cycle completes.
+  Runs in background — continue or disconnect while it runs.
+
+triggers:
+  - session_end
+  - stable_cycle_complete
+
+inputs:
+  - name: context
+    description: "Brief description of what was accomplished (e.g. 'webhook lag fix + monitoring')"
+    required: true
+    resolve: [ask]
+
+  - name: repo
+    description: "Primary repo path for this session"
+    required: false
+    resolve: [session, ask]
+
+agent:
+  subagent_type: savepoint
+  background: true
+  description_template: "Savepoint: ${context}"
+  prompt_template: |
+    Close the current work cycle for: ${context}
+    Repo: ${repo:-~/workflow}
+
+    Steps:
+    1. Clean up ephemeral pods (completed/evicted) if any
+    2. Run memory observer and apply approved updates
+    3. Back up backlog.db and docs.db
+    4. Run wtb cycle-check --save --repo ${repo:-~/workflow}
+    5. Create savepoint doc: wtb doc add --type savepoint --title "Savepoint YYYY-MM-DD — ${context}" --date YYYY-MM-DD
+
+chain:
+  from:
+    - ci-fix-agent
+    - code-review-agent

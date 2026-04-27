@@ -142,6 +142,12 @@ done
 copy "docs/workflow/platform"
 sanitize "docs/workflow/platform/REFERENCE.md"
 
+# Guias de uso genéricos
+copy "docs/guides"
+
+# Core — modelo cognitivo
+copy "_core/metacognition.md"
+
 # Scripts genéricos
 SCRIPTS_GENERIC=(
   memory-observer.sh
@@ -238,6 +244,28 @@ SCHEMA
   }
   log "OK: docs.db ($(sqlite3 "$STARTER_DOCS" 'SELECT COUNT(*) FROM documents;') templates)"
 fi
+
+# ── Use-cases — apenas os genéricos (sem contexto da empresa) ────────────────
+USE_CASES_GENERIC=(
+  ci-fix
+  ci-fix-agent
+  ci-watch
+  code-review
+  code-review-agent
+  discovery
+  explore-agent
+  incident
+  investigation
+  plan-agent
+  poc
+  postmortem
+  review
+  savepoint-agent
+)
+
+for uc in "${USE_CASES_GENERIC[@]}"; do
+  copy "use-cases/$uc"
+done
 
 # ── backlog.db — scaffold vazio ───────────────────────────────────────────────
 if $DRY_RUN; then

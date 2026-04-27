@@ -1,0 +1,47 @@
+id: review
+type: documentary
+name: Review
+version: "1.0"
+
+primitives:
+  - options-scoring     # ROI das oportunidades de melhoria
+  - compliance-scoring  # score de colaboracao 0-100
+  - adr-capture         # decisoes de processo
+
+triggers:
+  - postmortem_done_with_collaboration  # dimensao colaborativa relevante
+  - sprint_cycle_end                    # entrega significativa
+  - architecture_change                 # mudanca que merece retrospectiva
+
+inputs:
+  - name: postmortem_doc
+    description: "docs/workflow/postmortem/NNN-<context>-YYYY-MM-DD.md (se originado de incidente)"
+    required: false
+  - name: collaboration_context
+    description: Quem participou, como ferramentas se saíram, onde houve friccao
+    required: true
+  - name: metrics
+    description: Tempo de resolucao, score anterior — se disponivel
+    required: false
+
+artefacts:
+  - name: review_doc
+    format: "NNN-<context>-YYYY-MM-DD.md"
+    destination: "docs/workflow/review/"
+    required_sections:
+      - Score de colaboracao
+      - O que funcionou
+      - O que pode melhorar
+      - Decisoes de processo
+      - Chain
+
+naming_convention: "NNN-<context>-YYYY-MM-DD"
+nnn_padding: 3
+
+chain:
+  from:
+    - postmortem
+  to:
+    - 1on1    # quando ha dimensao de calibracao de parceria
+
+index_entry: "| NNN | YYYY-MM-DD | [Titulo](./NNN-context-YYYY-MM-DD.md) | Concluido | score | link |"

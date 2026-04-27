@@ -8,9 +8,9 @@ Sistema de memória persistente entre sessões via `wtb memory` e topic files.
 
 | Componente | Formato | Conteúdo |
 |------------|---------|----------|
-| `docs.db` (type=config) | SQLite | Fatos key-value (thresholds, IDs, configs) |
-| `.claude/memory/*.md` | Markdown | Topic files com contexto rico |
-| `~/.claude/projects/.../memory/MEMORY.md` | Markdown | Índice de topic files (auto-memory Claude Code) |
+| `context.json` | JSON | Fatos key-value (thresholds, IDs, configs) |
+| `memory/*.md` | Markdown | Topic files com contexto rico |
+| `MEMORY.md` | Markdown | Índice de topic files |
 
 ## Comandos
 
@@ -18,10 +18,8 @@ Sistema de memória persistente entre sessões via `wtb memory` e topic files.
 wtb memory set <key> "<val>" --type threshold --topic webhook --desc "..."
 wtb memory get <topic>
 wtb memory list [--topic <t>]
-wtb memory list --stale 60         # entradas não verificadas em 60+ dias
-wtb memory where "<descrição>"     # roteamento automático
-wtb memory validate                # guardrails de bloat
-wtb memory migrate                 # importa context.json legado → docs.db
+wtb memory where "<descrição>"   # roteamento automático
+wtb memory validate              # guardrails de bloat
 ```
 
 ## Fluxo de captura (Session Exit)
@@ -32,12 +30,12 @@ flowchart LR
     B --> C{aprovado?}
     C -->|sim| D[wtb memory set]
     C -->|não| E[descartar]
-    D --> F[docs.db atualizado]
+    D --> F[context.json atualizado]
 ```
 
-## Tipos de entrada
+## Tipos de memória
 
 - `threshold` — limite numérico calibrado empiricamente
 - `config` — ID de conexão, endpoint, parâmetro de infra
 - `fact` — fato operacional confirmado
-- `limit` — limite de recurso (memória, CPU, réplicas)
+- `rule` — regra de processo (vai para MEMORY.md)

@@ -1,0 +1,85 @@
+id: discovery
+type: documentary
+name: Technical Discovery
+version: "1.0"
+
+description: |
+  Análise exploratória de um tema técnico ou organizacional com saída estruturada.
+  Cobre: gap analysis, spike técnico, avaliação de ROI, ADR, avaliação de viabilidade.
+  Intenção: formalizar uma decisão antes de construir — ou documentar por que não construir.
+
+  Formato livre dentro da estrutura NNN-<context>-YYYY-MM-DD.md:
+  - Diagnóstico (estado atual)
+  - Gap / o que falta
+  - Opções com scoring
+  - Recomendação
+  - Handoff (o que vem a seguir)
+
+primitives:
+  - socratic-probe       # clarifica a pergunta antes de responder
+  - options-scoring      # ROI scoring das opções levantadas
+  - adr-capture          # registra a decisão (ou non-decision) como artefato
+
+triggers:
+  - arquitetura_em_aberto     # "faz sentido construir X?"
+  - decisao_pendente          # decisão bloqueando progresso
+  - gap_identificado          # analise de o que falta antes de planejar
+  - spike_necessario          # exploração antes de estimar
+  - pos_sessao                # documentar achados de uma conversa de exploração
+
+inputs:
+  - name: topic
+    description: "Tema da discovery (ex: llm-agent, auth-refactor, db-sharding)"
+    required: true
+    why_ask: "Nomeia o artefato e direciona o escopo da análise"
+    resolve: [ask]
+  - name: question
+    description: "Pergunta central a responder (ex: faz sentido? o que falta? ROI vale?)"
+    required: false
+    resolve: [ask]
+  - name: repo
+    description: "Repositório de contexto onde o artefato será salvo"
+    required: false
+    resolve: [session, ask]
+
+steps:
+  - name: document_discovery
+    engine: manual
+    description: |
+      Produz o documento de discovery com as seções:
+      diagnóstico, gap, opções, ROI, recomendação, handoff.
+      Pode ser complementado por HTML de apresentação.
+    output: "docs/workflow/discovery/NNN-<topic>-YYYY-MM-DD.md"
+
+artefacts:
+  - name: discovery_doc
+    format: "NNN-<topic>-YYYY-MM-DD.md"
+    destination: "docs/workflow/discovery/"
+  - name: presentation
+    format: "<topic>-discovery.html"
+    destination: "docs/"
+    optional: true
+
+naming_convention: "NNN-<topic>-YYYY-MM-DD"
+nnn_padding: 3
+
+chain:
+  from:
+    - qualquer            # discovery pode ser disparado de qualquer ponto
+  to:
+    - review              # quando a discovery levanta backlog
+    - backlog             # quando o tema vira narrativa de produto
+    - ops-response        # quando o tema é operacional
+    - incident            # quando o tema vira protocolo de resposta
+    # ou nenhum — discovery pode ser terminal se a decisão for "não construir"
+
+guidance:
+  when_to_use: |
+    Use quando a resposta a uma pergunta técnica ou de negócio
+    não é óbvia e precisa ser formalizada antes de agir.
+    Não use para execução — use para pensar antes de executar.
+  output_quality:
+    - "A pergunta central está claramente respondida?"
+    - "A recomendação é acionável (próximo passo concreto)?"
+    - "O handoff aponta para o use-case correto?"
+  primitives_ref: "~/workflow/_core/metacognition.md"

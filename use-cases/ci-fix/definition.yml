@@ -1,0 +1,136 @@
+id: ci-fix
+type: technical
+name: CI Fix — Diagnóstico e Correção de Falha de CI
+version: "1.0"
+
+description: |
+  Diagnostica e corrige falhas de CI (CircleCI, GitHub Actions) causadas por
+  deprecação de recursos (imagens, orbs, base images, runtimes) ou incompatibilidade
+  de stack legado com infraestrutura de CI atualizada.
+
+  Comportamento:
+  - Auditoria completa de TODOS os recursos depreciáveis antes do primeiro commit
+  - Verificação local das hipóteses antes de aplicar qualquer mudança
+  - Cross-check em repos similares do org que já possam ter o fix
+  - Fix único consolidado — nunca uma sequência de commits tentativas
+  - CI confirmado verde antes de qualquer comentário, PR review ou merge
+
+process_contract:
+  - NUNCA commitar um fix sem antes completar a auditoria completa
+  - NUNCA postar comentário ou review com CI pending ou failing
+  - NUNCA assumir disponibilidade de runtime (Java, Python, Node) sem verificar
+  - Um fix mal pesquisado que falha custa mais do que pesquisar direito na primeira vez
+  - Se não conseguir confirmar a hipótese localmente: pesquisar antes de tentar
+
+primitives:
+  - heuristic-first    # detecção do tipo de falha por padrões conhecidos (zero LLM)
+  - options-scoring    # avaliação de opções de fix com tradeoffs antes de escolher
+  - environment-probe  # verificar localmente antes de assumir (docker manifest, java -version)
+  - adr-capture        # lição aprendida → heurística nova no YAML
+
+triggers:
+  - ci_falhou_apos_push          # check-run retornou failure
+  - ci_falhou_em_pr              # CI vermelho bloqueia merge
+  - deprecation_warning_em_log   # aviso de deprecação nos logs do CI
+
+inputs:
+  - name: repo
+    description: "Repositório no formato owner/repo (ex: Cobliteam/severino)"
+    required: true
+    resolve: [session, ask]
+
+  - name: pr_or_branch
+    description: "PR número ou branch (ex: 380 ou SS-2204)"
+    required: true
+    resolve: [ask]
+
+  - name: ci_log_url
+    description: "URL do CI com o log de falha (CircleCI ou GitHub Actions)"
+    required: false
+    why_ask: "Sem log, diagnóstico é cego — aumenta loop de tentativas"
+    resolve: [ask]
+
+steps:
+  - name: read_log
+    engine: shell
+    description: |
+      Ler o log de falha ANTES de qualquer hipótese.
+      Se for CircleCI sem acesso: pedir ao operador o trecho relevante.
+      Se for GitHub Actions: gh run view --log-failed.
+    sentinel: não avançar sem pelo menos a mensagem de erro principal
+
+  - name: classify_failure
+    engine: heuristic
+    description: |
+      Classificar o tipo de falha com base no log.
+      Ver tabela de padrões conhecidos em guide.md#failure-patterns.
+    heuristic_ref: guide.md#failure-patterns
+
+  - name: audit_all_resources
+    engine: manual
+    description: |
+      Para falhas de deprecação: auditar TODOS os recursos depreciáveis no CI config.
+      Não corrigir apenas o que causou o erro visível — checar tudo de uma vez.
+      Ver checklist em guide.md#audit-checklist.
+    checklist_ref: guide.md#audit-checklist
+    sentinel: não commitar sem completar esta etapa
+
+  - name: verify_hypothesis
+    engine: shell
+    description: |
+      Verificar localmente cada hipótese antes de commitar.
+      Ver comandos de verificação em guide.md#verify-commands.
+    commands_ref: guide.md#verify-commands
+    sentinel: não assumir — verificar
+
+  - name: cross_check_org
+    engine: shell
+    description: |
+      Buscar em repos similares do org se o mesmo fix já foi aplicado.
+      Herbie-api, webhook-builder e outros repos Kotlin/Java/Scala são referência.
+    commands:
+      - "find ~/Cobliteam -name 'config.yml' -path '*/.circleci/*' | xargs grep -l '{resource}'"
+
+  - name: apply_fix
+    engine: shell
+    description: |
+      Aplicar fix consolidado — todos os recursos depreciados em um único commit.
+      Mensagem de commit explica o root cause, não apenas o sintoma.
+    sentinel: commit único por sessão de fix (não sequência de tentativas)
+
+  - name: wait_ci
+    engine: shell
+    description: |
+      Aguardar CI verde antes de qualquer outra ação.
+      Poll via GitHub check-runs API até conclusion = success ou failure.
+    commands:
+      - "guide.md#poll-ci"
+    sentinel: não avançar com CI pending ou failure
+
+artefacts:
+  - name: ci_fix_commit
+    format: "commit no branch com mensagem descritiva do root cause"
+    destination: "branch do PR"
+  - name: lesson_captured
+    format: "entrada na tabela de padrões conhecidos em guide.md#failure-patterns"
+    destination: "use-cases/ci-fix/guide.md"
+    when: "falha nova não coberta pelos padrões existentes"
+
+chain:
+  from:
+    - code-review     # PR com CI falhando detectado durante review
+    - ci-watch        # sentinel detectou falha; ci-watch passa para ci-fix
+  to:
+    - code-review     # retorna ao review após CI verde
+    - ci-watch        # confirma CI antes de liberar
+
+guidance:
+  when_to_use: |
+    Use quando um PR ou branch tem CI failing por motivo que requer investigação
+    ou correção de configuração (não apenas ktlint — esse vai para ci-watch).
+  when_not_to_use: |
+    Não use para falhas de teste (o código está errado — não é fix de CI).
+    Não use para ktlint/formatter — use ci-watch.
+  sentinel_rule: |
+    Não postar nada (comentário, review, merge) enquanto CI não estiver verde.
+    "Aguardar CI" não é opcional — é parte do processo.

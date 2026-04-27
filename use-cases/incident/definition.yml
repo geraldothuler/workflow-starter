@@ -1,0 +1,48 @@
+id: incident
+type: documentary
+name: Incident Response
+version: "1.0"
+
+primitives:
+  - environment-probe
+  - heuristic-first
+  - adr-capture
+
+triggers:
+  - alert_active        # Datadog, PagerDuty, Slack
+  - error_systemic      # usuario/colega reporta
+  - degradation         # latencia, error rate, lag crescente
+  - anomaly_manual      # detectada manualmente
+
+inputs:
+  - name: symptom
+    description: O que foi observado, quando, por quem
+    required: true
+  - name: environment
+    description: "producao | staging | regiao"
+    required: true
+  - name: systems_suspected
+    description: Servicos, bancos, filas suspeitos
+    required: false
+  - name: impact_scope
+    description: Usuarios, volume, SLA estimado
+    required: false
+
+artefacts:
+  - name: savepoint
+    format: "savepoint-YYYY-MM-DD.md"
+    destination: "docs/workflow/incident/NNN-<context>-YYYY-MM-DD/"
+  - name: savepoint_followup
+    format: "savepoint-YYYY-MM-DD-followup.md"
+    destination: "docs/workflow/incident/NNN-<context>-YYYY-MM-DD/"
+
+naming_convention: "NNN-<context>-YYYY-MM-DD"
+nnn_padding: 3
+
+chain:
+  from: []
+  to:
+    - postmortem    # quando incidente encerrado e ha licoes
+    - review        # opcional
+
+index_entry: "| NNN | YYYY-MM-DD | [Titulo](./NNN-context-YYYY-MM-DD/) | status | link |"

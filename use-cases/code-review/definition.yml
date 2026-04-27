@@ -1,0 +1,179 @@
+id: code-review
+type: technical
+name: Code Review — Análise e Postagem de PR
+version: "1.0"
+
+description: |
+  Analisa o diff de um PR, produz um rascunho de review com tradeoffs por item,
+  itera com o operador até aprovação, e posta via GitHub API.
+
+  Comportamento:
+  - Lê o diff completo + contexto (Jira, título do PR, arquivos afetados)
+  - Classifica itens por severidade: 🔴 bloqueante / 🟡 sugestão / 🟢 excelente
+  - Cada item tem: observação, tradeoffs, score com critérios explícitos, recomendação
+  - Adiciona blocos `suggestion` onde a mudança é de código
+  - Adiciona Mermaid onde facilita a explicação (fluxo, before/after)
+  - NUNCA posta sem confirmação explícita do operador
+
+process_contract:
+  - Nunca postar comentário, commit ou merge sem pedido expresso
+  - Apresentar rascunho completo e aguardar aprovação antes de qualquer ação no GitHub
+  - Iterar em tom e conteúdo até alinhamento
+  - Parar e perguntar em ambiguidades antes de avançar
+  - Autorização de postagem não implica autorização de merge
+
+primitives:
+  - socratic-probe      # clarifica tom e formato antes de redigir
+  - options-scoring     # tradeoffs por item com critério de score explícito
+  - adr-capture         # review é o artefato — captura a decisão técnica no PR
+
+triggers:
+  - pr_aguardando_review          # PR aberto sem reviewer ativo
+  - jira_aponta_para_pr           # ticket com PR link, operador quer revisar
+  - revisao_solicitada_diretamente # "faz code review do PR X"
+
+inputs:
+  - name: repo
+    description: "Repositório no formato owner/repo (ex: Cobliteam/severino)"
+    required: true
+    why_ask: "Identifica o repositório para buscar o diff e postar o review"
+    resolve: [session, ask]
+
+  - name: pr
+    description: "Número do PR a revisar (ex: 380)"
+    required: true
+    why_ask: "Resolve o diff e o commit HEAD para o review"
+    resolve: [ask]
+
+  - name: jira_ticket
+    description: "Ticket Jira associado ao PR (ex: SS-2204) — contexto adicional"
+    required: false
+    why_ask: "Enriquece a análise com o objetivo declarado da mudança"
+    resolve: [ask]
+
+  - name: tone
+    description: "Tom dos comentários (ex: consultivo/amigável/evolutivo)"
+    required: false
+    default: "consultivo, amigável, evolutivo — sem arrogância"
+    resolve: [ask]
+
+  - name: review_type
+    description: "APPROVE | COMMENT | REQUEST_CHANGES — default deriva da severidade"
+    required: false
+    default: "deriva da severidade: 🔴 presente → REQUEST_CHANGES; só 🟡/🟢 → COMMENT"
+    resolve: [ask]
+
+steps:
+  - name: fetch_context
+    engine: shell
+    description: |
+      Busca diff completo + metadados do PR via gh CLI.
+      Se jira_ticket fornecido, lê contexto via Atlassian MCP (getJiraIssue).
+    commands:
+      - "gh pr diff {pr} --repo {repo}"
+      - "gh pr view {pr} --repo {repo} --json title,body,files"
+
+  - name: analyze
+    engine: llm
+    description: |
+      Analisa o diff com as lentes:
+      - Correção: o código faz o que o PR declara?
+      - Completude: há casos não cobertos, testes faltando, edge cases?
+      - Consistência: divergências de padrão, nomenclatura, contrato de API?
+      - Risco operacional: mudanças silenciosas de comportamento, breaking changes?
+      - Clareza: o código é legível por alguém que não o escreveu?
+      Classifica cada item por severidade e tipo (change_request | suggestion | praise).
+
+  - name: draft_review
+    engine: llm
+    description: |
+      Produz rascunho completo em markdown com:
+      - Cabeçalho: resumo geral + tabela de itens (path | severidade | tipo)
+      - Por item: observação → tradeoffs → score (critérios explícitos) → recomendação
+      - Blocos `suggestion` para mudanças de código (1 linha ou multi-linha)
+      - Diagramas Mermaid onde facilitam a explicação
+      - Conclusão por item com badge de severidade
+      Aguarda aprovação do operador antes de qualquer ação no GitHub.
+
+  - name: iterate
+    engine: manual
+    description: |
+      Apresenta o rascunho ao operador.
+      Itera em: tom, profundidade de análise, seleção de itens, wording.
+      Repete até confirmação explícita de aprovação ("aprovado", "postar", etc.).
+
+  - name: post_review
+    engine: shell
+    description: |
+      Posta o review via GitHub API com comentários inline e tipo correto
+      (APPROVE / COMMENT / REQUEST_CHANGES).
+      Apenas após confirmação explícita — nunca antecipa.
+    command_ref: guide.md#posting
+
+severity_taxonomy:
+  red:
+    badge: "🔴"
+    label: "Change request"
+    description: "Bloqueia merge — bug, risco operacional, ou verificação obrigatória"
+    review_type_impact: "força REQUEST_CHANGES"
+  yellow:
+    badge: "🟡"
+    label: "Sugestão"
+    description: "Melhoria não bloqueante — legibilidade, consistência, overhead evitável"
+    review_type_impact: "neutro"
+  green:
+    badge: "🟢"
+    label: "Excelente"
+    description: "Validação positiva — boa prática reconhecida explicitamente"
+    review_type_impact: "neutro (pode omitir se não agrega)"
+
+comment_format:
+  structure:
+    - "**{badge} {título curto}**"
+    - "Observação: o que foi identificado e por quê importa"
+    - "Tabela de tradeoffs: opção | vantagem | desvantagem | score"
+    - "Recomendação: ação concreta ou pergunta de validação"
+    - "```suggestion ... ``` (quando há mudança de código proposta)"
+    - "Mermaid (quando fluxo ou estrutura facilita a explicação)"
+  score_criteria:
+    - "Impacto operacional: afeta produção, Datadog, consumers downstream?"
+    - "Impacto de legibilidade: confunde próxima pessoa que ler?"
+    - "Reversibilidade: pode ser corrigido pós-merge sem risco?"
+    - "Esforço de correção: 1 linha vs refactor"
+
+artefacts:
+  - name: github_review
+    format: "GitHub PR Review — inline comments + verdict"
+    destination: "PR #{pr} no GitHub"
+  - name: review_doc
+    format: "NNN-<context>-YYYY-MM-DD.md"
+    destination: "~/.workflow/code-review/"
+    optional: true
+    when: "review complexo ou com padrões sistêmicos que vale preservar"
+
+chain:
+  from:
+    - backlog        # stories implementadas geram PRs para review
+    - discovery      # descoberta técnica resulta em PR
+    - qualquer_pr    # trigger direto pelo operador
+  to:
+    - merge          # após itens endereçados
+    - postmortem     # se padrões sistêmicos identificados valem documentar
+
+guidance:
+  when_to_use: |
+    Use quando há um PR aberto e o operador quer revisar com rigor antes de aprovar.
+    Especialmente útil quando: mudanças de comportamento em produção, breaking changes silenciosos,
+    configuração de infra (logback, k8s values, Flink config).
+  when_not_to_use: |
+    Não use para PR trivial (typo, bump de versão) — revise diretamente.
+    Não use quando o objetivo é só confirmar que "está verde" — use ci-watch.
+  tone_default: |
+    Consultivo, amigável, evolutivo — sem arrogância.
+    Observação antes de prescrição. Tradeoffs antes de recomendação.
+    Elogiar o que está bem feito — explicitamente, sem exagero.
+  suggestion_blocks: |
+    Usar `suggestion` quando a mudança proposta é clara e de 1–N linhas contíguas.
+    Para mudanças de arquitetura ou multi-arquivo: descrever sem suggestion.
+    Suggestion blocks só funcionam em linhas presentes no diff (added/changed, side=RIGHT).
+  reference_case: "SS-2204 — PR #380 Cobliteam/severino (logback.xml + values.yaml)"
