@@ -57,15 +57,23 @@ Adicione `~/bin` ao `$PATH` se necessário.
 export WTB_REPO_ROOT="$HOME/workflow"
 ```
 
-### 4. Verificar
+### 4. Registrar como MCP global
+
+```bash
+./scripts/wtb-daemon-setup.sh
+```
+
+Isso cria um daemon launchd que inicia o `wtb serve` no login e registra o MCP em `~/.claude/settings.json`. A partir daí, o `wtb` estará disponível em **qualquer sessão Claude Code**, de qualquer diretório.
+
+### 5. Verificar
 
 ```bash
 wtb status
-wtb repo status          # mostra os 50 repos e staleness do índice
-wtb doc list --type template   # lista os 11 templates disponíveis
+wtb repo status          # saúde do índice de repos
+wtb doc list --type template   # lista os templates disponíveis
 ```
 
-### 5. Iniciar Claude Code neste diretório
+### 6. Iniciar Claude Code neste diretório
 
 ```bash
 cd ~/workflow
@@ -213,7 +221,8 @@ Os guias em `docs/guides/` cobrem os fluxos principais:
 | Guia | O que explica |
 |------|--------------|
 | `getting-started.md` | Primeira sessão, ativação, configuração inicial |
-| `mcps.md` | MCPs recomendados, por que usar, como configurar cada um |
+| `wtb-mcp.md` | wtb como MCP global: daemon launchd, 40 tools disponíveis, setup |
+| `mcps.md` | MCPs externos recomendados (GitHub, Datadog, Slack, etc.) |
 | `cycle-close.md` | Como encerrar uma sessão: CI, savepoint, memória, backup |
 | `ops-response.md` | Diagnóstico de incidente com 6 checks obrigatórios |
 | `yaml-driven-design.md` | Princípio YAML-first: quando Go, quando YAML |
