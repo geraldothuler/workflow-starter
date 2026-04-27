@@ -2,7 +2,7 @@
 
 Metodologia e ferramentas para engenharia aumentada com IA — template para devs que usam Claude Code.
 
-Contém o `wtb` CLI (Go), skills para Claude Code, e uma base de conhecimento pré-carregada com 50 repos indexados e 11 templates de artefatos.
+Contém o `wtb` CLI (Go), skills para Claude Code, e uma base de conhecimento pré-carregada com repos indexados e templates de artefatos.
 
 ---
 
@@ -19,12 +19,15 @@ O `CLAUDE.md` na raiz é o entry point. Toda sessão com Claude Code começa len
 | Item | O que é |
 |------|---------|
 | `CLAUDE.md` | Contratos, princípios e chain rules — lido pelo Claude em toda sessão |
+| `_core/metacognition.md` | 8 primitivas cognitivas do modelo de pensamento |
 | `cmd/wtb/` + `pkg/` | Código-fonte do CLI `wtb` em Go |
-| `docs.db` | SQLite com 11 templates de artefatos (discovery, savepoint, postmortem, etc.) |
-| `repos.duckdb` | DuckDB com 50 repos indexados (handlers, modelos, eventos, APIs, configuração) |
+| `docs.db` | SQLite com templates de artefatos (discovery, savepoint, postmortem, etc.) e memória operacional |
+| `repos.duckdb` | DuckDB com repos indexados (handlers, modelos, eventos, APIs, configuração) |
 | `backlog.db` | SQLite vazio — scaffold para tarefas |
-| `.claude/skills/` | 21 skills para Claude Code (pdf, playwright, grill-me, daily, tdd, ...) |
+| `.claude/skills/` | Skills para Claude Code (pdf, playwright, grill-me, daily, tdd, ...) |
 | `.claude/memory/` | Arquivos de feedback e metodologia — carregados sob demanda |
+| `docs/guides/` | Guias de uso: getting-started, cycle-close, ops-response, yaml-driven-design, memory-system |
+| `docs/workflow/platform/` | Referência técnica da plataforma |
 | `scripts/` | `db-backup.sh`, `memory-observer.sh`, `export-to-starter.sh` |
 
 ---
@@ -122,6 +125,13 @@ wtb backlog list
 wtb backlog done <id>
 ```
 
+### Ciclo de sessão (`wtb cycle-check`)
+
+```bash
+wtb cycle-check --repo ~/workflow          # verifica estado da sessão
+wtb cycle-check --save --repo ~/workflow   # grava savepoint técnico no docs.db
+```
+
 ---
 
 ## Adicionando seus próprios repos ao índice
@@ -172,20 +182,38 @@ wtb memory set repoindex_stale_days 14 --type config --topic repoindex --desc "R
 
 ---
 
+## Guias de uso
+
+Os guias em `docs/guides/` cobrem os fluxos principais:
+
+| Guia | O que explica |
+|------|--------------|
+| `getting-started.md` | Primeira sessão, ativação, configuração inicial |
+| `cycle-close.md` | Como encerrar uma sessão: CI, savepoint, memória, backup |
+| `ops-response.md` | Diagnóstico de incidente com 6 checks obrigatórios |
+| `yaml-driven-design.md` | Princípio YAML-first: quando Go, quando YAML |
+| `memory-system.md` | Sistema de memória: `wtb memory`, `docs.db`, topic files |
+
+---
+
 ## Estrutura de arquivos
 
 ```
 workflow/
 ├── CLAUDE.md               # entry point — contratos e chain rules
+├── _core/
+│   └── metacognition.md    # 8 primitivas cognitivas
 ├── cmd/wtb/                # CLI source
 ├── pkg/                    # pacotes Go
-├── docs.db                 # artefatos (discovery, savepoint, templates...)
+├── docs.db                 # artefatos + memória operacional
 ├── repos.duckdb            # repoindex (handlers, modelos, eventos, APIs)
 ├── backlog.db              # tarefas
 ├── .claude/
 │   ├── skills/             # skills Claude Code
 │   └── memory/             # feedback e metodologia
-├── docs/workflow/platform/ # referência técnica da plataforma
+├── docs/
+│   ├── guides/             # getting-started, cycle-close, ops-response, yaml-driven-design, memory-system
+│   └── workflow/platform/  # referência técnica da plataforma
 └── scripts/                # utilitários de manutenção
 ```
 

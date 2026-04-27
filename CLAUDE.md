@@ -281,7 +281,7 @@ bash ~/workflow/scripts/db-backup.sh                                  # Session 
 wtb memory get <topic>                   # carrega arquivo de tópico
 wtb memory where "<descrição>"           # roteia onde armazenar um fato
 wtb memory set <key> <val> --type --topic --desc  # armazena fato estruturado
-wtb memory list [--topic <t>] [--stale N]         # lista context.json
+wtb memory list [--topic <t>] [--stale N]         # lista entradas de memória no docs.db
 wtb memory validate                      # guardrails bloat + content-leak
 wtb backlog list [--status S] [--repo R] [--tag T] [--jira J]  # tarefas ativas
 wtb backlog search <keyword>             # busca full-text no DB
@@ -297,9 +297,9 @@ wtb doc delete <id>                      # soft-delete
 **Regra de uso do `wtb memory`:**
 - Ao aprender novo fato operacional: `wtb memory where "<descrição>"` → seguir recomendação
 - Para carregar contexto de tópico: `wtb memory get <topic>` (alias do topic-map.yml)
-- Credenciais e IDs → sempre Keychain, nunca context.json
-- **Antes de qualquer ação com threshold/limite:** `wtb memory list --topic <topic>` — nunca usar valor literal de skill ou heurística sem verificar context.json primeiro
-- Skills e heurísticas referenciam chaves (`context.json: <key>`), não valores — o valor canônico está no context.json
+- Credenciais e IDs → sempre Keychain, nunca em arquivo commitado
+- **Antes de qualquer ação com threshold/limite:** `wtb memory list --topic <topic>` — nunca usar valor literal de skill ou heurística sem verificar docs.db primeiro
+- Skills e heurísticas referenciam chaves por nome — o valor canônico está no docs.db
 
 Referência técnica: `wtb doc get platform-reference-workflow-toolkit`
 Pendências e estado: `wtb backlog list`
