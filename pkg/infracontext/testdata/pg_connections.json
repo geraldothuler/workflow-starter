@@ -1,0 +1,100 @@
+{
+  "items": [
+    {
+      "datname": "fusca_production",
+      "usename": "app_user",
+      "application_name": "fusca-api",
+      "client_addr": "10.0.1.10",
+      "state": "active",
+      "wait_event_type": null,
+      "wait_event": null,
+      "query": "SELECT * FROM orders WHERE created_at > now() - interval '1 hour'",
+      "backend_start": "2026-02-22T08:00:00+00:00",
+      "state_duration_seconds": 0.5
+    },
+    {
+      "datname": "fusca_production",
+      "usename": "app_user",
+      "application_name": "fusca-api",
+      "client_addr": "10.0.1.11",
+      "state": "idle",
+      "wait_event_type": "Client",
+      "wait_event": "ClientRead",
+      "query": "SELECT 1",
+      "backend_start": "2026-02-22T07:30:00+00:00",
+      "state_duration_seconds": 120.3
+    },
+    {
+      "datname": "fusca_production",
+      "usename": "app_user",
+      "application_name": "fusca-worker",
+      "client_addr": "10.0.1.20",
+      "state": "idle",
+      "wait_event_type": "Client",
+      "wait_event": "ClientRead",
+      "query": "UPDATE jobs SET status = 'completed' WHERE id = 42",
+      "backend_start": "2026-02-22T06:00:00+00:00",
+      "state_duration_seconds": 300.0
+    },
+    {
+      "datname": "fusca_production",
+      "usename": "analytics",
+      "application_name": "metabase",
+      "client_addr": "10.0.3.5",
+      "state": "active",
+      "wait_event_type": "IO",
+      "wait_event": "DataFileRead",
+      "query": "SELECT date_trunc('day', created_at) as day, count(*) FROM orders GROUP BY 1",
+      "backend_start": "2026-02-22T09:00:00+00:00",
+      "state_duration_seconds": 85.2
+    },
+    {
+      "datname": "fusca_production",
+      "usename": "replicator",
+      "application_name": "debezium_connector",
+      "client_addr": "10.0.1.50",
+      "state": "active",
+      "wait_event_type": null,
+      "wait_event": null,
+      "query": "START_REPLICATION SLOT airbyte_cdc_slot LOGICAL 0/A000000",
+      "backend_start": "2026-02-22T05:00:00+00:00",
+      "state_duration_seconds": 0.1
+    },
+    {
+      "datname": "fusca_production",
+      "usename": "app_user",
+      "application_name": "fusca-api",
+      "client_addr": "10.0.1.12",
+      "state": "idle_in_transaction",
+      "wait_event_type": "Client",
+      "wait_event": "ClientRead",
+      "query": "BEGIN; SELECT * FROM products WHERE id = 100",
+      "backend_start": "2026-02-22T08:30:00+00:00",
+      "state_duration_seconds": 45.0
+    },
+    {
+      "datname": "fusca_production",
+      "usename": "admin",
+      "application_name": "pgAdmin",
+      "client_addr": "10.0.5.1",
+      "state": "idle",
+      "wait_event_type": "Client",
+      "wait_event": "ClientRead",
+      "query": "SELECT version()",
+      "backend_start": "2026-02-22T10:00:00+00:00",
+      "state_duration_seconds": 5.0
+    },
+    {
+      "datname": "fusca_production",
+      "usename": "app_user",
+      "application_name": "fusca-api",
+      "client_addr": "10.0.1.13",
+      "state": "active",
+      "wait_event_type": "Lock",
+      "wait_event": "transactionid",
+      "query": "UPDATE inventory SET quantity = quantity - 1 WHERE product_id = 200",
+      "backend_start": "2026-02-22T10:05:00+00:00",
+      "state_duration_seconds": 90.0
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+heuristics:
+  # Infra eviction: eventos FailedScheduling, TaintManagerEviction ou Evicted
+  # dentro da janela de tempo → confirma instabilidade de nó.
+  - name: infra_eviction
+    conditions:
+      - field: eviction_event_count
+        op: ">"
+        value: 0
+    status: warn
+    signal: "K8s events: {eviction_event_count} eviction/scheduling event(s) nos últimos {window_min}min"
+    actions:
+      - "kubectl get pods -n {namespace} --context {context} | grep -v Running"
+      - "kubectl describe node — verificar taints ativos"

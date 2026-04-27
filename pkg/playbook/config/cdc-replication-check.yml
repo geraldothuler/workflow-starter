@@ -1,0 +1,72 @@
+playbook:
+  id: cdc-replication-check
+  title: "CDC Replication Health Investigation"
+  description: >
+    Investigates CDC replication pipeline health:
+    PostgreSQL replication slots, WAL senders, connections,
+    and optionally Kafka connectors and pipeline pods.
+  version: "1.0"
+  tags: [cdc, replication, postgresql]
+
+  required_providers:
+    - id: postgresql
+      description: "Source database with replication slots"
+
+  optional_providers:
+    - id: kafka
+      description: "Kafka cluster with CDC topics/connectors"
+    - id: kubectl
+      description: "Kubernetes cluster running pipeline pods"
+
+  steps:
+    - id: check_replication_slots
+      title: "Check PostgreSQL replication slots"
+      provider: postgresql
+      resource_types: [replication_slots, replication_stats]
+      analyzers:
+        - name: analyze_inactive_slots
+        - name: analyze_wal_lag
+
+    - id: check_pg_connections
+      title: "Check PostgreSQL connections"
+      provider: postgresql
+      resource_types: [database_info, connections]
+      optional: true
+      analyzers:
+        - name: analyze_connection_saturation
+
+    - id: check_kafka_connectors
+      title: "Check Kafka connectors"
+      provider: kafka
+      optional: true
+      analyzers:
+        - name: analyze_failed_connectors
+
+    - id: check_kafka_consumers
+      title: "Check Kafka consumer groups"
+      provider: kafka
+      optional: true
+      analyzers:
+        - name: analyze_empty_consumer_groups
+
+    - id: check_pipeline_pods
+      title: "Check pipeline pods"
+      provider: kubectl
+      optional: true
+      resource_types: [pods, deployments]
+      analyzers:
+        - name: analyze_unhealthy_pods
+          args:
+            name_patterns: ["airbyte", "debezium", "cdc", "replication"]
+
+  report:
+    title_template: "CDC Replication Investigation"
+    sections:
+      - id: summary
+        title: "Executive Summary"
+      - id: findings
+        title: "Findings"
+      - id: causal_chain
+        title: "Causal Chain"
+      - id: recommendations
+        title: "Recommendations"

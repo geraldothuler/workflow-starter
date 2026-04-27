@@ -1,0 +1,144 @@
+# Compound validation patterns for Layer 3
+# Override: .workflow/deep-dives/compound_patterns.yml
+
+# Known compound tech words (parts)
+known_words:
+  - Spring
+  - Boot
+  - Cloud
+  - React
+  - Native
+  - Router
+  - Next
+  - Vue
+  - API
+  - Gateway
+  - Service
+  - Mesh
+  - Circuit
+  - Breaker
+  - Event
+  - Sourcing
+  - SQL
+  - Server
+  - Message
+  - Queue
+  - Pub
+  - Sub
+
+# Known base technology names (for Tech+Version/Modifier patterns)
+known_techs:
+  - Java
+  - Python
+  - Node
+  - PHP
+  - Ruby
+  - Angular
+  - Vue
+  - React
+  - Spring
+
+# Technology modifiers (can form valid compounds)
+tech_modifiers:
+  - Native
+  - Core
+  - Cloud
+  - Enterprise
+  - Community
+  - Framework
+  - Library
+  - Server
+  - Client
+  - Router
+  - Query
+  - Builder
+
+# Verbs that invalidate compounds (Portuguese)
+verbs_pt:
+  - Criar
+  - Usar
+  - Implementar
+  - Configurar
+  - Adicionar
+  - Remover
+  - Atualizar
+  - Buscar
+  - Listar
+  - Salvar
+  - Carregar
+  - Enviar
+  - Receber
+  - Publicar
+  - Consumir
+  - Processar
+  - Validar
+  - Autenticar
+  - Autorizar
+  - Retornar
+  - Persistir
+  - Integrar
+
+# Verbs that invalidate compounds (English)
+verbs_en:
+  - Create
+  - Use
+  - Implement
+  - Configure
+  - Add
+  - Remove
+  - Update
+  - Search
+  - List
+  - Save
+  - Load
+  - Send
+  - Receive
+  - Publish
+  - Consume
+  - Process
+  - Validate
+  - Authenticate
+  - Authorize
+  - Return
+  - Persist
+  - Integrate
+  - Build
+  - Make
+
+# Business terms that invalidate compounds (Portuguese)
+business_terms_pt:
+  - Produtos
+  - Pedidos
+  - Clientes
+  - "Usu\xE1rios"
+  - Eventos
+  - Dados
+  - Sistema
+  - Projeto
+  - "Aplica\xE7\xE3o"
+  - Tela
+  - "Formul\xE1rio"
+  - "Bot\xE3o"
+  - Tabela
+  - Lista
+  - Login
+
+# Business terms that invalidate compounds (English)
+business_terms_en:
+  - Products
+  - Orders
+  - Customers
+  - Users
+  - Events
+  - Items
+  - Data
+  - System
+  - Project
+  - Application
+  - Screen
+  - Form
+  - Button
+  - Menu
+  - Modal
+  - Table
+  - List

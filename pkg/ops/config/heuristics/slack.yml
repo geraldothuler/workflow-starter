@@ -1,0 +1,21 @@
+heuristics:
+  # Palavras-chave críticas (critical, outage, down) — sinal de incidente ativo.
+  - name: critical_keywords
+    conditions:
+      - field: critical_matches
+        op: ">"
+        value: 0
+    status: critical
+    signal: "Slack: {critical_matches} critical keyword match(es) in {total_messages} messages"
+    actions:
+      - "review channel for active incidents"
+
+  # Acumulação de keywords de aviso — ruído elevado, possível incidente emergindo.
+  # Threshold 3: até 3 ocorrências é ruído normal; acima indica padrão real.
+  - name: warn_keywords
+    conditions:
+      - field: warn_matches
+        op: ">"
+        value: 3
+    status: warn
+    signal: "Slack: {warn_matches} warning keyword match(es) in {total_messages} messages"

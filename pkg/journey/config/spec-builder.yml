@@ -1,0 +1,114 @@
+# spec-builder.yml — Spec Builder journey definition
+# Absorbed from skills/wtb-spec-builder/SKILL.md (Phase 9.2d)
+# Loaded via go:embed in pkg/journey/
+
+journey:
+  id: spec-builder
+  title: "Construir Especificacao"
+  description: "Guia construcao de specs tecnicas via conversa socratica"
+
+  principles:
+    - "Progressive disclosure — nunca todas as perguntas de uma vez"
+    - "Uma pergunta por vez (Socratic)"
+    - "Validar sem insistir — se usuario nao sabe, sugerir default"
+    - "Linguagem acessivel, sem jargao"
+    - "Draft mindset — spec e rascunho vivo, refinavel pelo time tecnico"
+    - "Contextualizar POR QUE a pergunta importa antes de perguntar"
+
+  phases:
+    - id: context
+      order: 1
+      title: "Contexto do Projeto"
+      questions:
+        - id: what
+          prompt: "O que o sistema faz?"
+          why: "Core purpose direciona todas as decisoes"
+          type: multiline
+          required: true
+        - id: why
+          prompt: "Por que esse projeto e necessario?"
+          why: "Motivacao de negocio guia priorizacao"
+          type: multiline
+          required: true
+        - id: existing_repo
+          prompt: "Existe repositorio?"
+          type: boolean
+          branch:
+            true: { action: "run_repo_detection" }
+            false: { action: "ask_stack_preferences" }
+
+    - id: users
+      order: 2
+      title: "Usuarios e Escala"
+      questions:
+        - id: who
+          prompt: "Quem usa o sistema?"
+          why: "Perfil de usuario define UX e complexidade"
+          type: text
+          required: true
+        - id: users_count
+          prompt: "Quantos usuarios simultaneos?"
+          type: text
+        - id: data_volume
+          prompt: "Volume de dados esperado?"
+          type: text
+
+    - id: features
+      order: 3
+      title: "Funcionalidades"
+      questions:
+        - id: core_features
+          prompt: "Quais as funcionalidades principais?"
+          why: "Features core definem o MVP"
+          type: multiline
+          required: true
+        - id: nice_to_have
+          prompt: "O que seria bonus (nice-to-have)?"
+          type: multiline
+
+    - id: integrations
+      order: 4
+      title: "Integracoes"
+      questions:
+        - id: external_systems
+          prompt: "Integra com outros sistemas?"
+          type: multiline
+        - id: apis
+          prompt: "APIs externas necessarias?"
+          type: multiline
+
+    - id: product_implications
+      order: 5
+      title: "Implicacoes de Produto"
+      questions:
+        - id: costs
+          prompt: "Ha custos variaveis (API calls, infra, licencas)?"
+          why: "Custos impactam arquitetura (cache, batching)"
+          type: text
+        - id: retroactivity
+          prompt: "Features precisam ser retroativas?"
+          why: "Retroatividade exige migrations + backfill"
+          type: boolean
+
+    - id: nfrs
+      order: 6
+      title: "Requisitos Nao-Funcionais"
+      questions:
+        - id: performance
+          prompt: "Requisitos de performance?"
+          type: text
+        - id: security
+          prompt: "Requisitos de seguranca?"
+          type: text
+        - id: availability
+          prompt: "SLA de disponibilidade?"
+          type: text
+
+    - id: suggestions
+      order: 7
+      title: "Sugestoes"
+      questions:
+        - id: tech_suggestions
+          prompt: "Sugestoes de stack tecnico baseadas no contexto"
+          type: output
+          auto_generate: true

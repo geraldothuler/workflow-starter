@@ -1,0 +1,25 @@
+runtimes:
+  - name: docker-desktop
+    check_cmd: "docker info"
+    check_pattern: "Docker Desktop"
+    install_url: "https://docs.docker.com/desktop/mac/install/"
+  - name: colima
+    check_cmd: "colima status"
+    check_pattern: "colima is running"
+    install_url: "https://github.com/abiosoft/colima"
+
+compose:
+  discovery:
+    - "docker-compose.yml"
+    - "docker-compose.yaml"
+    - "docker/docker-compose.yml"
+    - "docker/docker-compose.yaml"
+    - "infra/docker-compose.yml"
+
+health:
+  retries: 40
+  interval_seconds: 3
+  timeout_seconds: 120
+
+port_conflict:
+  auto_stop: true

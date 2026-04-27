@@ -1,0 +1,66 @@
+{
+  "data": [
+    {
+      "type": "container",
+      "id": "container-001",
+      "attributes": {
+        "name": "api-gateway-7f8b9c6d4-x2k3l",
+        "state": "running",
+        "image": {
+          "name": "myorg/api-gateway",
+          "tag": "v1.5.2"
+        }
+      },
+      "relationships": {
+        "host": {
+          "data": {
+            "id": "i-abc123.prod.us-east-1"
+          }
+        }
+      }
+    },
+    {
+      "type": "container",
+      "id": "container-002",
+      "attributes": {
+        "name": "user-service-5c7d8e9f1-a4b5c",
+        "state": "running",
+        "image": {
+          "name": "myorg/user-service",
+          "tag": "v2.1.0"
+        }
+      },
+      "relationships": {
+        "host": {
+          "data": {
+            "id": "i-abc123.prod.us-east-1"
+          }
+        }
+      }
+    },
+    {
+      "type": "container",
+      "id": "container-003",
+      "attributes": {
+        "name": "redis-cache-0",
+        "state": "running",
+        "image": {
+          "name": "redis",
+          "tag": "7-alpine"
+        }
+      },
+      "relationships": {
+        "host": {
+          "data": {
+            "id": "i-def456.prod.us-east-1"
+          }
+        }
+      }
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "next_cursor": ""
+    }
+  }
+}

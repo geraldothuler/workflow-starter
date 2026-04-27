@@ -1,0 +1,54 @@
+[
+  {
+    "info": {
+      "name": "orders-s3-sink",
+      "type": "sink",
+      "config": {
+        "connector.class": "io.confluent.connect.s3.S3SinkConnector",
+        "topics": "orders"
+      }
+    },
+    "status": {
+      "connector": {
+        "state": "RUNNING"
+      },
+      "tasks": [
+        {"id": 0, "state": "RUNNING"},
+        {"id": 1, "state": "RUNNING"}
+      ]
+    }
+  },
+  {
+    "info": {
+      "name": "postgres-cdc-source",
+      "type": "source",
+      "config": {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+        "topics": "cdc.public.users"
+      }
+    },
+    "status": {
+      "connector": {
+        "state": "PAUSED"
+      },
+      "tasks": []
+    }
+  },
+  {
+    "info": {
+      "name": "failed-connector",
+      "type": "sink",
+      "config": {
+        "connector.class": "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector"
+      }
+    },
+    "status": {
+      "connector": {
+        "state": "FAILED"
+      },
+      "tasks": [
+        {"id": 0, "state": "FAILED"}
+      ]
+    }
+  }
+]

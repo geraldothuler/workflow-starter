@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workflow Lens</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <!-- Hero Section -->
+  <div class="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-content">
+      <div class="hero-eyebrow" id="heroEyebrow">Workflow · Backlog Técnico</div>
+      <h1 id="heroTitle">Carregando...</h1>
+      <p class="hero-sub" id="heroSubtitle"></p>
+    </div>
+  </div>
+
+  <!-- KPI Strip -->
+  <div class="kpi-strip">
+    <div class="kpi-grid" id="kpiGrid">
+      <div class="loading" id="kpiLoading">Carregando KPIs...</div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <!-- Layer Navigation -->
+    <div class="layer-nav">
+      <span class="layer-chip active clickable" id="navOverview" onclick="showEpicList()">Visão Geral</span>
+      <span class="layer-sep" id="navSep" style="display:none">›</span>
+      <span class="layer-chip" id="navEpic" style="display:none"></span>
+    </div>
+
+    <!-- Epic List View -->
+    <div id="viewEpicList">
+      <div class="section-header fade-in">
+        <h2 id="epicsSectionTitle">Épicos do Projeto</h2>
+        <p id="epicsSectionSubtitle">Visão geral dos principais componentes técnicos e suas entregas.</p>
+      </div>
+
+      <div class="epic-grid" id="epicGrid">
+        <div class="loading" id="epicsLoading">Carregando épicos...</div>
+      </div>
+    </div>
+
+    <!-- Epic Detail View -->
+    <div id="viewEpicDetail" class="epic-detail"></div>
+
+    <!-- Timeline Section -->
+    <div class="timeline-section fade-in" id="timelineSection" style="display:none">
+      <div class="section-header">
+        <h2 id="timelineSectionTitle">Linha do Tempo</h2>
+        <p id="timelineSectionSubtitle">Distribuição de épicos ao longo dos sprints planejados.</p>
+      </div>
+      <div class="timeline-wrapper">
+        <div class="timeline-header" id="timelineHeader"></div>
+        <div id="timelineBody"></div>
+      </div>
+    </div>
+
+    <!-- Summary Card -->
+    <div class="summary-card fade-in" id="summaryCard" style="display:none">
+      <div class="summary-inner">
+        <h2 class="summary-title" id="summaryTitle">Resumo Executivo</h2>
+        <div class="summary-stats" id="summaryStats"></div>
+        <p class="summary-text" id="summaryText"></p>
+        <div class="next-steps-title" id="nextStepsTitle">Próximos Passos</div>
+        <div class="next-steps" id="nextSteps"></div>
+      </div>
+    </div>
+  </div>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<!-- DEEP DIVES OVERVIEW (v3.3) -->
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+
+<section class="deep-dives-section" id="deepDivesSection" style="display:none">
+  <div class="section-header">
+    <h2 class="section-title" id="deepDivesSectionTitle">Deep Dives</h2>
+    <p class="section-subtitle" id="deepDivesSectionSubtitle">Documentação técnica detalhada das tecnologias e padrões do projeto.</p>
+  </div>
+
+  <div class="dd-overview-grid" id="deepDivesGrid">
+    <!-- Preenchido por JavaScript -->
+  </div>
+</section>
+
+  <!-- Deep Dive Panel -->
+  <div class="ddp-overlay" id="ddpOverlay" onclick="closeDeepDive()"></div>
+  <div class="deep-dive-panel" id="deepDivePanel">
+    <div class="ddp-header">
+      <h3 id="ddpTitle">Tecnologia</h3>
+      <button class="ddp-close" onclick="closeDeepDive()">×</button>
+    </div>
+    <div class="ddp-body" id="ddpBody">
+      <div class="loading">Carregando...</div>
+    </div>
+  </div>
+
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<!-- PLANNING DASHBOARD (v3.2) -->
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+
+<section class="planning-section">
+  <div class="section-header">
+    <h2 class="section-title" id="planningSectionTitle">Planejamento</h2>
+    <p class="section-subtitle" id="planningSectionSubtitle">Análise de esforço e distribuição por épico</p>
+  </div>
+
+  <div id="planning-dashboard">
+    <!-- Preenchido por JavaScript -->
+  </div>
+</section>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<!-- METRICS DASHBOARD (v3.3) -->
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+
+<section class="metrics-section" id="metricsSection" style="display:none">
+  <div class="section-header">
+    <h2 class="section-title" id="metricsSectionTitle">Insights de Geração</h2>
+    <p class="section-subtitle" id="metricsSectionSubtitle">Métricas do pipeline de geração e otimização</p>
+  </div>
+
+  <div id="metrics-dashboard">
+    <!-- Preenchido por JavaScript -->
+  </div>
+</section>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<!-- MILESTONES ROADMAP (v3.2) -->
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+
+<section class="milestones-section">
+  <div class="section-header">
+    <h2 class="section-title" id="roadmapSectionTitle">Roadmap</h2>
+    <p class="section-subtitle" id="roadmapSectionSubtitle">Milestones e entregas planejadas</p>
+  </div>
+
+  <div id="milestones-roadmap">
+    <!-- Preenchido por JavaScript -->
+  </div>
+</section>
+
+  <script src="/static/scripts.js"></script>
+</body>
+</html>

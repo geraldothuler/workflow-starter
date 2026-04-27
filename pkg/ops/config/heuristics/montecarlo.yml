@@ -1,0 +1,73 @@
+endpoint: "https://api.getmontecarlo.com/graphql"
+
+# ── Probes ─────────────────────────────────────────────────────────────────────
+# Cada probe declara a query GraphQL e como extrair campos numéricos da resposta.
+#
+# Vars disponíveis para template:
+#   {{.RuleUUID}}   UUID da custom rule (obrigatório para rule_breach_history)
+#   {{.StartTime}}  ISO-8601 — default: 7 dias atrás (auto-preenchido se ausente)
+#   {{.EndTime}}    ISO-8601 — default: agora (auto-preenchido se ausente)
+#
+# extract — dot-notation sobre data.* da resposta GraphQL:
+#   field.sub           → navegação de objeto
+#   arr[-1].field       → último elemento do array
+#   arr[*].field|sum    → soma do campo em todos os elementos
+
+probes:
+  - id: rule_breach_history
+    gql: >-
+      { getCustomRuleExecutionAnalytics(
+          ruleId: "{{.RuleUUID}}",
+          startTime: "{{.StartTime}}",
+          groupBy: DAY
+        ) { date runs passes breaches } }
+    extract:
+      breaches_today: "getCustomRuleExecutionAnalytics[-1].breaches"
+      runs_today:     "getCustomRuleExecutionAnalytics[-1].runs"
+      passes_today:   "getCustomRuleExecutionAnalytics[-1].passes"
+      total_breaches: "getCustomRuleExecutionAnalytics[*].breaches|sum"
+
+# ── Heuristics ─────────────────────────────────────────────────────────────────
+
+heuristics:
+  # Breach hoje na custom rule monitorada.
+  - name: rule_breaching_today
+    conditions:
+      - field: breaches_today
+        op: ">"
+        value: 0
+    status: critical
+    signal: "MC rule breach: {breaches_today}/{runs_today} runs hoje ({total_breaches} total 7d)"
+    actions:
+      - "check Flink consumer lag: driver-association-past topic"
+      - "check PENDING_EVENTS: SELECT count(*) FROM driver_association_past_request WHERE status = 'PENDING'"
+
+  # Rule passou hoje mas teve breaches recentes — situação instável.
+  - name: rule_unstable
+    conditions:
+      - field: passes_today
+        op: ">"
+        value: 0
+      - field: total_breaches
+        op: ">"
+        value: 3
+    status: warn
+    signal: "MC rule instável: passou hoje mas {total_breaches} breaches nos últimos 7d"
+    actions:
+      - "monitor next execution — may be transient lag"
+
+# ── Notas de diagnóstico (device-driver drift) ─────────────────────────────────
+# Investigação 2026-03-06 — 423 devices divergentes, padrão crônico:
+#
+#   FUSCA_NULL  (76%): Fusca zerrou driver_id mas Scylla ainda tem o antigo.
+#                      Evento de desassociação (null) não consumido pelo Flink.
+#                      Mediana lag: ~16h. Muitos com >7d (OLD_7D+).
+#   SCYLLA_NULL (21%): Fusca tem driver, Scylla sem registro.
+#                      Flink nunca entregou o evento de associação.
+#   DRIVER_MISMATCH (3%): UUIDs diferentes — update em voo ou ordering.
+#
+# Diagnóstico Snowflake:
+#   python3 ~/.workflow/drafts/sf-device-driver-drift.py
+#
+# Causa raiz: NÃO é lag agudo de Flink — é acúmulo crônico de eventos null
+# não processados. Não causado pelo PR #1103 (fusca-driver-association-past-retry).

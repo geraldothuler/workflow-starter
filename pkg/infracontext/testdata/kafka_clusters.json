@@ -1,0 +1,39 @@
+{
+  "data": [
+    {
+      "id": "lkc-abc123",
+      "spec": {
+        "display_name": "production-cluster",
+        "availability": "HIGH",
+        "cloud": "AWS",
+        "region": "us-east-1",
+        "http_endpoint": "https://pkc-abc123.us-east-1.aws.confluent.cloud:443",
+        "config": {
+          "kind": "Basic"
+        }
+      },
+      "status": {
+        "phase": "PROVISIONED"
+      }
+    },
+    {
+      "id": "lkc-def456",
+      "spec": {
+        "display_name": "staging-cluster",
+        "availability": "LOW",
+        "cloud": "GCP",
+        "region": "us-central1",
+        "http_endpoint": "https://pkc-def456.us-central1.gcp.confluent.cloud:443",
+        "config": {
+          "kind": "Basic"
+        }
+      },
+      "status": {
+        "phase": "PROVISIONED"
+      }
+    }
+  ],
+  "metadata": {
+    "total_size": 2
+  }
+}

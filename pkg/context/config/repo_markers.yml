@@ -1,0 +1,95 @@
+# repo_markers.yml — Repository stack detection markers
+# Absorbed from skills/wtb-repo-detection/SKILL.md (Phase 9.2a)
+# Loaded via go:embed in pkg/context/
+
+markers:
+  backend:
+    - id: go
+      name: "Go"
+      files: ["go.mod"]
+    - id: nodejs
+      name: "Node.js"
+      files: ["package.json"]
+      patterns: { "package.json": "express|fastify|koa|nestjs" }
+    - id: python
+      name: "Python"
+      files: ["requirements.txt", "pyproject.toml", "Pipfile"]
+    - id: java_spring
+      name: "Java + Spring Boot"
+      files: ["pom.xml", "build.gradle"]
+      patterns: { "pom.xml": "org.springframework.boot" }
+    - id: ruby_rails
+      name: "Ruby on Rails"
+      files: ["Gemfile"]
+      patterns: { "Gemfile": "rails" }
+    - id: php_laravel
+      name: "PHP + Laravel"
+      files: ["composer.json"]
+      patterns: { "composer.json": "laravel/framework" }
+    - id: dotnet
+      name: ".NET"
+      files: ["*.csproj"]
+
+  database:
+    - id: postgresql
+      name: "PostgreSQL"
+      env_patterns: ["DATABASE_URL=postgres", "PGHOST"]
+      docker_patterns: ["image: postgres"]
+    - id: mysql
+      name: "MySQL"
+      env_patterns: ["DATABASE_URL=mysql"]
+      docker_patterns: ["image: mysql"]
+    - id: mongodb
+      name: "MongoDB"
+      env_patterns: ["MONGO_URI", "MONGODB_URL"]
+      docker_patterns: ["image: mongo"]
+    - id: redis
+      name: "Redis"
+      env_patterns: ["REDIS_URL", "REDIS_HOST"]
+      docker_patterns: ["image: redis"]
+
+  queue:
+    - id: kafka
+      name: "Kafka"
+      files: ["kafka.properties"]
+      docker_patterns: ["image: confluentinc", "image: wurstmeister/kafka"]
+    - id: rabbitmq
+      name: "RabbitMQ"
+      env_patterns: ["RABBITMQ_URL", "AMQP_URL"]
+      docker_patterns: ["image: rabbitmq"]
+
+  infrastructure:
+    - id: docker
+      name: "Docker"
+      files: ["Dockerfile", "docker-compose.yml"]
+    - id: kubernetes
+      name: "Kubernetes"
+      files: ["k8s/", "kubernetes/", "helm/"]
+    - id: terraform
+      name: "Terraform"
+      files: ["*.tf", "terraform/"]
+
+  cicd:
+    - id: github_actions
+      name: "GitHub Actions"
+      files: [".github/workflows/"]
+    - id: circleci
+      name: "CircleCI"
+      files: [".circleci/config.yml"]
+    - id: gitlab_ci
+      name: "GitLab CI"
+      files: [".gitlab-ci.yml"]
+
+  frontend:
+    - id: react
+      name: "React"
+      patterns: { "package.json": "\"react\"" }
+    - id: vue
+      name: "Vue"
+      patterns: { "package.json": "\"vue\"" }
+    - id: angular
+      name: "Angular"
+      patterns: { "package.json": "@angular/core" }
+    - id: nextjs
+      name: "Next.js"
+      patterns: { "package.json": "\"next\"" }

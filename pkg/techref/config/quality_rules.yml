@@ -1,0 +1,63 @@
+# quality_rules.yml — Deep Dive quality heuristics
+# Absorbed from skills/wtb-deep-dives/SKILL.md (Phase 9.1a)
+# Loaded via go:embed in pkg/techref/
+
+quality_rules:
+  structure:
+    - section: what_is
+      max_sentences: 3
+      rule: "Define sem jargao, contextualize pro projeto"
+    - section: why_here
+      rule: "Especifico ao projeto — nunca generico"
+    - section: configuration
+      rule: "Codigo minimo, config real do projeto"
+    - section: resources
+      rule: "Links para documentacao oficial"
+
+  templates:
+    backend_framework:
+      name: "Backend Framework (Spring Boot, FastAPI, Express)"
+      why_prompts:
+        - "Ecossistema: bibliotecas especificas necessarias"
+        - "Performance: requisitos atendidos"
+        - "Conhecimento: familiaridade do time"
+        - "Integracoes: sistemas que precisa integrar"
+    database:
+      name: "Database (PostgreSQL, MongoDB, Redis)"
+      why_prompts:
+        - "Modelo de Dados: por que relacional/document/key-value"
+        - "Volume: quantos dados, crescimento esperado"
+        - "Queries: padroes de acesso"
+        - "Garantias: ACID, consistencia eventual, etc"
+    message_queue:
+      name: "Message Queue (Kafka, RabbitMQ, SQS)"
+      why_prompts:
+        - "Throughput: volume de mensagens"
+        - "Garantias: at-least-once, exactly-once"
+        - "Desacoplamento: sistemas que comunica"
+        - "Retencao: precisa replay?"
+    frontend:
+      name: "Frontend Framework (React, Vue, Angular)"
+      why_prompts:
+        - "Complexidade UI: dashboards, forms, real-time"
+        - "Ecossistema: bibliotecas UI necessarias"
+        - "Performance: requisitos de UX"
+        - "Team: conhecimento existente"
+
+  anti_patterns:
+    - "Tecnologia nao mencionada no backlog"
+    - "Explicacao que duplica documentacao oficial"
+    - "Deep dive sem contexto do projeto"
+    - "Exemplo de codigo com mais de 30 linhas"
+    - "Tecnologias obvias/triviais (JSON, HTTP, Git)"
+
+  skip_when:
+    - "Tecnologia obvia/trivial (JSON, HTTP, Git)"
+    - "Ja explicada em outro deep dive"
+    - "Mencionada apenas como alternativa considerada"
+    - "Biblioteca pequena/utilitaria (lodash, axios)"
+
+  economy:
+    target_cost_per_dive: "$0.30-1.00"
+    prefer_template: true
+    max_tokens_per_dive: 2000

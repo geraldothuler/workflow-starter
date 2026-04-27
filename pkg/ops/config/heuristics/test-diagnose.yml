@@ -1,0 +1,24 @@
+heuristics:
+  # Falhas de código reais — bloqueiam merge, indicam bug.
+  # Avaliado antes de infra_only: se houver falhas de código E infra, o status é critical.
+  - name: code_failures
+    conditions:
+      - field: code_fails
+        op: ">"
+        value: 0
+    status: critical
+    signal: "{code_fails} falha(s) de código em {module} — testes falharam por bug, não por infra"
+    actions:
+      - "investigate test failures: {code_fails} code failure(s) in {module}"
+
+  # Apenas falhas de infra — ambiente indisponível, testes inconclusivos.
+  - name: infra_only
+    conditions:
+      - field: infra_fails
+        op: ">"
+        value: 0
+    status: warn
+    signal: "infra unavailable: {infra_fails} falha(s) de infra em {module} — testes inconclusivos"
+    actions:
+      - "check docker/testcontainers availability and retry"
+      - "wtb ops k8s-status para verificar pods do ambiente de teste"

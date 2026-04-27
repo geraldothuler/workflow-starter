@@ -1,0 +1,15 @@
+# Valid document types for the workflow platform.
+# To extend or override, place a doc-types.yml in your repo root.
+types:
+  - discovery
+  - savepoint
+  - runbook
+  - 1on1
+  - postmortem
+  - incident
+  - review
+  - reference
+  - config
+  - template
+  - poc
+  - draft

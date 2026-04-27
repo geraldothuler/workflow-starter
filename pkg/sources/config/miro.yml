@@ -1,0 +1,68 @@
+# ============================================================================
+# MIRO SOURCE — MCP-first
+# ============================================================================
+#
+# Fetches Miro boards via the official Miro MCP server.
+# Converts board items to structured markdown using the JSON walker.
+#
+# Requires: MIRO_API_TOKEN
+# MCP Server: @anthropic-ai/miro-mcp (GA)
+#
+# ============================================================================
+
+source:
+  id: miro
+  name: "Miro"
+  description: "Imports Miro boards as structured markdown"
+
+  url_patterns:
+    - "miro\\.com/app/board/"
+
+  url_parser:
+    regex: "miro\\.com/app/board/([^/]+)"
+    captures:
+      board_id: 1
+
+  transport:
+    type: mcp
+    command: "npx"
+    args: ["-y", "@anthropic-ai/miro-mcp"]
+    env:
+      MIRO_API_TOKEN: "${MIRO_API_TOKEN}"
+    timeout: "60s"
+    startup_timeout: "15s"
+
+  auth:
+    env_var: "MIRO_API_TOKEN"
+    setup_guide: |
+      How to get your Miro token:
+      1. Go to miro.com/app/settings/user-profile/apps
+      2. Create a new app or use "Your apps" section
+      3. Generate an API token with board:read scope
+      4. Configure: export MIRO_API_TOKEN='miro_xxx...'
+
+      Then run:
+        wtb source fetch https://miro.com/app/board/<board_id>/
+
+  fetch_steps:
+    - tool: "miro_get_board"
+      args:
+        board_id: "{{.board_id}}"
+      extract:
+        title: "name"
+        description: "description"
+      store_as: "board_data"
+    - tool: "miro_get_items_by_board_id"
+      args:
+        board_id: "{{.board_id}}"
+      store_as: "items_data"
+
+  markdown:
+    mode: walker
+    walker:
+      source_key: "items_data"
+      max_depth: 4
+      heading_keys: ["title", "name"]
+      skip_keys: ["id", "createdBy", "modifiedBy", "createdAt", "modifiedAt", "links", "position", "geometry"]
+      code_keys: ["content", "plainText"]
+      value_keys: ["type", "status"]

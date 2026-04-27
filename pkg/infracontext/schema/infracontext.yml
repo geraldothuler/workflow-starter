@@ -1,0 +1,64 @@
+# InfraContext Normalized Schema v1
+# Todos os providers mapeiam seus dados para este schema.
+# Tipos Go são derivados deste YAML.
+
+schema:
+  version: "1"
+
+  infra_context:
+    provider:    { type: string, required: true }
+    cluster:     { type: string, required: true }
+    namespace:   { type: string, default: "default" }
+    fetched_at:  { type: datetime }
+    ttl:         { type: duration, default: "5m" }
+    metrics:     { type: "[]Metric" }
+    topology:    { type: "[]TopologyNode" }
+    health:      { type: "[]HealthCheck" }
+    alerts:      { type: "[]Alert" }
+
+  Metric:
+    name:      { type: string, required: true }
+    value:     { type: float64, required: true }
+    unit:      { type: string }
+    labels:    { type: "map[string]string" }
+    timestamp: { type: datetime }
+
+  TopologyNode:
+    kind:        { type: string, required: true }   # Pod, Service, Deployment, Node
+    name:        { type: string, required: true }
+    namespace:   { type: string }
+    status:      { type: string, required: true }
+    labels:      { type: "map[string]string" }
+    replicas:    { type: ReplicaInfo }
+    containers:  { type: "[]ContainerInfo" }
+    connects_to: { type: "[]string" }
+    metadata:    { type: "map[string]string" }
+
+  ReplicaInfo:
+    desired:   { type: int }
+    ready:     { type: int }
+    available: { type: int }
+
+  ContainerInfo:
+    name:        { type: string }
+    image:       { type: string }
+    ready:       { type: bool }
+    cpu_request: { type: string }
+    cpu_limit:   { type: string }
+    mem_request: { type: string }
+    mem_limit:   { type: string }
+
+  HealthCheck:
+    component:  { type: string, required: true }
+    kind:       { type: string }
+    status:     { type: string, enum: [healthy, degraded, unhealthy, unknown] }
+    message:    { type: string }
+    last_check: { type: datetime }
+
+  Alert:
+    name:      { type: string }
+    severity:  { type: string, enum: [critical, warning, info] }
+    component: { type: string }
+    message:   { type: string }
+    fired_at:  { type: datetime }
+    status:    { type: string, enum: [firing, resolved, pending] }

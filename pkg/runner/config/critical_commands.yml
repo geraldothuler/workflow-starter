@@ -1,0 +1,17 @@
+critical_commands:
+  - name: auth
+    critical: true
+    blocks_on: [error, critical]
+    skip_signal: "skipped (dependency: {dep} returned {status})"
+
+  - name: db-health
+    depends_on: [auth]
+
+  - name: k8s-status
+    depends_on: []
+
+  - name: kafka-status
+    depends_on: []
+
+  - name: logs-analyze
+    depends_on: []

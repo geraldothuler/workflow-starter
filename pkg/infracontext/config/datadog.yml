@@ -1,0 +1,143 @@
+provider:
+  id: datadog
+  name: "Datadog"
+  description: "Infrastructure context from Datadog API (hosts, services, monitors, integrations)"
+
+  transport:
+    primary: http
+    http:
+      base_url: "https://{{or .DD_SITE \"api.datadoghq.com\"}}"
+      headers:
+        DD-API-KEY: "{{.DD_API_KEY}}"
+        DD-APPLICATION-KEY: "{{.DD_APP_KEY}}"
+        Content-Type: "application/json"
+        Accept: "application/json"
+      timeout: "30s"
+
+  auth:
+    credentials:
+      - name: "DD_API_KEY"
+        description: "Datadog API key"
+      - name: "DD_APP_KEY"
+        description: "Datadog Application key"
+      - name: "DD_SITE"
+        description: "Datadog site (default: api.datadoghq.com)"
+        required: false
+    resolve_order: ["env", "keyring", "encrypted-file"]
+    setup_guide: |
+      Configure Datadog API credentials:
+        export DD_API_KEY='your-api-key'
+        export DD_APP_KEY='your-application-key'
+        export DD_SITE='api.datadoghq.com'  # optional, defaults to api.datadoghq.com
+
+  defaults:
+    namespace: ""
+    ttl: "10m"
+    resource_types: [integrations, service_definitions, hosts, service_dependencies, containers, monitors, dashboards]
+
+  fetch_steps:
+    - id: integrations
+      http_method: GET
+      http_path: "/api/v1/integration"
+      optional: true
+
+      mapping:
+        topology:
+          source_path: "integrations"
+          transform: "dd_integrations_to_topology"
+
+    - id: service_definitions
+      http_method: GET
+      http_path: "/api/v2/services/definitions"
+      optional: true
+      pagination:
+        style: page
+        page_param: "page[number]"
+        page_size_param: "page[size]"
+        page_size: 100
+        results_path: "data"
+
+      mapping:
+        topology:
+          source_path: "data"
+          transform: "dd_services_to_topology"
+
+    - id: hosts
+      http_method: GET
+      http_path: "/api/v1/hosts"
+      http_params:
+        count: "1000"
+        include_muted_hosts_data: "true"
+        include_hosts_metadata: "true"
+
+      mapping:
+        topology:
+          source_path: "host_list"
+          transform: "dd_hosts_to_topology"
+        metrics:
+          source_path: "host_list"
+          transform: "dd_host_metrics"
+
+    - id: service_dependencies
+      http_method: GET
+      http_path: "/api/v1/service_dependencies"
+      optional: true
+
+      mapping:
+        topology:
+          source_path: "."
+          transform: "dd_dependencies_to_topology"
+
+    - id: containers
+      http_method: GET
+      http_path: "/api/v2/containers"
+      optional: true
+      pagination:
+        style: cursor
+        cursor_param: "page[cursor]"
+        cursor_path: "meta.pagination.next_cursor"
+        results_path: "data"
+
+      mapping:
+        topology:
+          source_path: "data"
+          each:
+            kind:   { value: "Container" }
+            name:   { path: "attributes.name" }
+            status: { path: "attributes.state" }
+            metadata:
+              image:      { path: "attributes.image.name" }
+              image_tag:  { path: "attributes.image.tag" }
+              host:       { path: "relationships.host.data.id" }
+
+    - id: monitors
+      http_method: GET
+      http_path: "/api/v1/monitor"
+      pagination:
+        style: page
+        page_param: "page"
+        page_size_param: "page_size"
+        page_size: 100
+        results_path: "."
+
+      mapping:
+        alerts:
+          source_path: "."
+          transform: "dd_monitors_to_alerts"
+
+    - id: dashboards
+      http_method: GET
+      http_path: "/api/v1/dashboard"
+      optional: true
+
+      mapping:
+        topology:
+          source_path: "dashboards"
+          each:
+            kind:   { value: "Dashboard" }
+            name:   { path: "title" }
+            status: { value: "Active" }
+            metadata:
+              url:         { path: "url" }
+              author:      { path: "author_handle" }
+              layout_type: { path: "layout_type" }

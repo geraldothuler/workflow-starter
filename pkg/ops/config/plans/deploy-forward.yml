@@ -1,0 +1,41 @@
+id: deploy-forward
+name: "Kubernetes Deployment Forward"
+description: "Planned deploy with pre-flight, smoke test and monitoring window. Requires human sign-off."
+risk: medium
+approval_required: [3, 5]
+
+vars:
+  aws_profile: ""
+  kubectl_context: ""
+  namespace: ""
+  deployment: ""
+
+steps:
+  - id: 1
+    tool: "wtb ops auth --profile {{.aws_profile}}"
+    purpose: "verificar token AWS SSO antes de deploy"
+    owner: auto
+
+  - id: 2
+    tool: "wtb ops k8s status --context {{.kubectl_context}} --namespace {{.namespace}} --deployment {{.deployment}}"
+    purpose: "pre-flight: confirmar estado saudável antes de deployar"
+    owner: auto
+    abort_if: "data.not_ready > 0"
+
+  - id: 3
+    tool: "# kubectl set image deployment/{{.deployment}} {{.deployment}}=<image>:<tag> -n {{.namespace}} --context {{.kubectl_context}}"
+    purpose: "deploy — substituir <image>:<tag> antes de executar"
+    owner: human
+    rollback: "# kubectl rollout undo deployment/{{.deployment}} -n {{.namespace}} --context {{.kubectl_context}}"
+
+  - id: 4
+    tool: "wtb ops k8s status --context {{.kubectl_context}} --namespace {{.namespace}} --deployment {{.deployment}}"
+    purpose: "smoke test: confirmar pods saudáveis pós-deploy"
+    owner: auto
+    abort_if: "data.not_ready > 0"
+
+  - id: 5
+    tool: "# Janela de monitoramento: observar dashboards e logs por 15min — Enter para confirmar, Ctrl+C para abortar"
+    purpose: "monitoramento pós-deploy: confirmar ausência de erros antes de sign-off"
+    owner: human
+    rollback: "# kubectl rollout undo deployment/{{.deployment}} -n {{.namespace}} --context {{.kubectl_context}}"

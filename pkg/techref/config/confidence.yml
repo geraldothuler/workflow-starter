@@ -1,0 +1,44 @@
+# Confidence scoring configuration
+# Override: .workflow/deep-dives/confidence.yml
+
+thresholds:
+  min: 0.65
+  high: 0.85
+  very_high: 0.95
+
+layer_scores:
+  known: 1.0
+  acronym: 0.85
+  compound: 0.70
+  isolated: 0.50
+
+penalties:
+  verb_before: -0.15
+  verb_after: -0.15
+
+bonuses:
+  start_of_sentence: 0.05
+  tech_nearby: 0.10
+
+# Classifier-specific keywords that indicate specific usage
+specific_keywords:
+  - "migra\xE7\xE3o"
+  - migrar
+  - migration
+  - "otimiza\xE7\xE3o"
+  - otimizar
+  - optimization
+  - custom
+  - customizado
+  - customization
+  - "espec\xEDfico"
+  - especial
+  - special
+  - "avan\xE7ado"
+  - advanced
+  - "configura\xE7\xE3o complexa"
+  - complex config
+  - "integra\xE7\xE3o"
+  - integration
+  - "sincroniza\xE7\xE3o"
+  - sync

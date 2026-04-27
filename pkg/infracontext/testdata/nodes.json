@@ -1,0 +1,86 @@
+{
+  "apiVersion": "v1",
+  "kind": "NodeList",
+  "items": [
+    {
+      "metadata": {
+        "name": "node-1",
+        "labels": {
+          "kubernetes.io/os": "linux",
+          "node.kubernetes.io/instance-type": "m5.xlarge"
+        }
+      },
+      "status": {
+        "conditions": [
+          { "type": "Ready", "status": "True", "message": "kubelet is posting ready status" },
+          { "type": "MemoryPressure", "status": "False" },
+          { "type": "DiskPressure", "status": "False" }
+        ],
+        "nodeInfo": {
+          "osImage": "Ubuntu 22.04.3 LTS",
+          "kernelVersion": "5.15.0-89-generic",
+          "containerRuntimeVersion": "containerd://1.7.11",
+          "kubeletVersion": "v1.28.4"
+        },
+        "allocatable": {
+          "cpu": "4",
+          "memory": "16Gi",
+          "pods": "110"
+        }
+      }
+    },
+    {
+      "metadata": {
+        "name": "node-2",
+        "labels": {
+          "kubernetes.io/os": "linux",
+          "node.kubernetes.io/instance-type": "m5.xlarge"
+        }
+      },
+      "status": {
+        "conditions": [
+          { "type": "Ready", "status": "True", "message": "kubelet is posting ready status" },
+          { "type": "MemoryPressure", "status": "False" },
+          { "type": "DiskPressure", "status": "False" }
+        ],
+        "nodeInfo": {
+          "osImage": "Ubuntu 22.04.3 LTS",
+          "kernelVersion": "5.15.0-89-generic",
+          "containerRuntimeVersion": "containerd://1.7.11",
+          "kubeletVersion": "v1.28.4"
+        },
+        "allocatable": {
+          "cpu": "4",
+          "memory": "16Gi",
+          "pods": "110"
+        }
+      }
+    },
+    {
+      "metadata": {
+        "name": "node-3",
+        "labels": {
+          "kubernetes.io/os": "linux",
+          "node.kubernetes.io/instance-type": "m5.large"
+        }
+      },
+      "status": {
+        "conditions": [
+          { "type": "Ready", "status": "False", "message": "kubelet not ready: node not responding" },
+          { "type": "MemoryPressure", "status": "True" }
+        ],
+        "nodeInfo": {
+          "osImage": "Ubuntu 22.04.3 LTS",
+          "kernelVersion": "5.15.0-89-generic",
+          "containerRuntimeVersion": "containerd://1.7.11",
+          "kubeletVersion": "v1.28.4"
+        },
+        "allocatable": {
+          "cpu": "2",
+          "memory": "8Gi",
+          "pods": "58"
+        }
+      }
+    }
+  ]
+}

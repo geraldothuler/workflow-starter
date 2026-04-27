@@ -1,0 +1,28 @@
+# test_strategy.yml — Render package test strategy
+# Absorbed from skills/wtb-lens-guardrail/SKILL.md (Phase 9.2e)
+# Loaded via go:embed in pkg/render/
+
+test_layers:
+  - id: unit
+    scope: "Go functions"
+    when: "Any pkg/render/ change"
+    count_baseline: 26
+    command: "go test -count=1 ./pkg/render/"
+
+  - id: httptest
+    scope: "HTTP handlers"
+    when: "handlers.go or server changes"
+    count_baseline: 13
+    command: "go test -tags=integration -v -run 'TestIntegration' -count=1 ./pkg/render/"
+
+  - id: browser
+    scope: "DOM rendering"
+    when: "templates/ or static files change"
+    count_baseline: 17
+    command: "go test -tags=browser -v -run 'TestBrowser' -count=1 -timeout 120s ./pkg/render/"
+    required_elements:
+      - "#hero-title"
+      - ".epic-card"
+      - ".kpi-strip"
+    screenshot_update_required: true
+    screenshots_dir: "docs/images/"

@@ -1,0 +1,191 @@
+# {{.Meta.Title}}
+{{- if .Meta.Subtitle}}
+
+> {{.Meta.Subtitle}}
+{{- end}}
+{{- if .Meta.Description}}
+
+{{.Meta.Description}}
+{{- end}}
+
+---
+
+## KPIs
+{{range .KPIs}}
+- **{{.Label}}:** {{.Value}}{{if .Sub}} ({{.Sub}}){{end}}
+{{- end}}
+
+{{- if gt (len .Effort.ByEpic) 0}}
+
+## Esforco
+
+| Metrica | Valor |
+|---------|-------|
+| Total de historias | {{.Effort.TotalStories}} |
+| Total de story points | {{.Effort.TotalSPs}} |
+| Dias estimados | {{.Effort.TotalDays}} |
+{{- if gt .Effort.OptimisticDays 0}}
+| Dias (otimista) | {{.Effort.OptimisticDays}} |
+{{- end}}
+{{- if gt .Effort.RealisticDays 0}}
+| Dias (realista) | {{.Effort.RealisticDays}} |
+{{- end}}
+
+### Esforco por Epico
+
+| Epico | Historias | Story Points | Dias | % do Total |
+|-------|-----------|--------------|------|------------|
+{{- range $id, $ef := .Effort.ByEpic}}
+{{- $epic := index $.Epics $id}}
+| {{if $epic}}{{$epic.Title}}{{else}}{{$id}}{{end}} | {{$ef.Stories}} | {{$ef.SPs}} | {{$ef.Days}} | {{printf "%.0f" $ef.Percentage}}% |
+{{- end}}
+{{- end}}
+
+---
+
+## Epicos
+{{range $id, $epic := .Epics}}
+
+### {{$epic.Code}} — {{$epic.Title}}
+{{- if $epic.Summary}}
+
+{{$epic.Summary}}
+{{- end}}
+{{- if $epic.Priority}}
+
+**Prioridade:** {{$epic.Priority}}
+{{- end}}
+{{- if gt (len $epic.Stories) 0}}
+
+#### Historias
+
+| ID | Titulo | Esforco | Risco |
+|----|--------|---------|-------|
+{{- range $epic.Stories}}
+| {{.Code}} | {{.Title}} | {{.Effort}} SP | {{.RiskLabel}} |
+{{- end}}
+{{- end}}
+{{end}}
+
+{{- if gt (len .DeepDives) 0}}
+
+---
+
+## Tech Refs
+{{range $key, $dd := .DeepDives}}
+
+### {{$dd.Term}}
+{{- if $dd.Classification}} `{{$dd.Classification}}`{{end}}{{if $dd.Scope}} ({{$dd.Scope}}){{end}}
+
+**O que e:** {{$dd.WhatIs}}
+
+**Por que aqui:** {{$dd.WhyHere}}
+{{- if $dd.Configuration}}
+
+**Configuracao:** {{$dd.Configuration}}
+{{- end}}
+{{- if gt (len $dd.Patterns) 0}}
+
+**Patterns:**
+{{- range $dd.Patterns}}
+- {{.}}
+{{- end}}
+{{- end}}
+{{- if gt (len $dd.Decisions) 0}}
+
+**Decisoes:**
+{{- range $dd.Decisions}}
+- {{.}}
+{{- end}}
+{{- end}}
+{{end}}
+{{- end}}
+
+{{- if gt (len .Milestones) 0}}
+
+---
+
+## Milestones
+{{range .Milestones}}
+### {{.Title}}
+{{- if .Description}}
+
+{{.Description}}
+{{- end}}
+
+- **Story Points:** {{.TotalSPs}}
+- **Dias estimados:** {{.DaysEstimate}}
+{{- if .ValueProp}}
+- **Proposta de valor:** {{.ValueProp}}
+{{- end}}
+{{- if gt (len .EpicIDs) 0}}
+- **Epicos:** {{join .EpicIDs ", "}}
+{{- end}}
+{{end}}
+{{- end}}
+
+{{- if .CriticalPathReport}}
+
+---
+
+## Caminho Critico
+
+{{- if .CriticalPathReport.Summary}}
+
+{{.CriticalPathReport.Summary}}
+{{- end}}
+{{- if gt (len .CriticalPathReport.Phases) 0}}
+
+### Fases de Execucao
+
+| Fase | Epicos | Esforco Total | Paralelo | Justificativa |
+|------|--------|---------------|----------|---------------|
+{{- range .CriticalPathReport.Phases}}
+| {{.Phase}} | {{join .EpicCodes ", "}} | {{.TotalEffort}} SP | {{if .Parallel}}Sim{{else}}Nao{{end}} | {{.Reasoning}} |
+{{- end}}
+{{- end}}
+{{- if gt (len .CriticalPathReport.Items) 0}}
+
+### Itens do Caminho Critico
+
+{{- range .CriticalPathReport.Items}}
+1. **{{.EpicCode}} — {{.EpicTitle}}** (Fase {{.Phase}})
+   - {{.Reasoning}}
+{{- if .IsFoundation}}
+   - *Fundacao: deve ser concluido antes das dependentes*
+{{- end}}
+{{- if gt (len .DependsOn) 0}}
+   - Depende de: {{join .DependsOn ", "}}
+{{- end}}
+{{- end}}
+{{- end}}
+{{- if gt (len .CriticalPathReport.Dependencies) 0}}
+
+### Dependencias Inferidas
+
+| De | Para | Tipo | Confianca | Justificativa |
+|----|------|------|-----------|---------------|
+{{- range .CriticalPathReport.Dependencies}}
+| {{.From}} | {{.To}} | {{.Type}} | {{printf "%.0f" .Confidence}}% | {{.Reasoning}} |
+{{- end}}
+{{- end}}
+{{- end}}
+
+{{- if gt (len .PatternSuggestions) 0}}
+
+---
+
+## Sugestoes de Patterns
+
+{{- range .PatternSuggestions}}
+- **{{.PatternName}}** (`{{.Type}}` | {{.Category}})
+  {{.Reasoning}}
+{{- if gt (len .AffectedEpics) 0}}
+  _Epicos afetados: {{join .AffectedEpics ", "}}_
+{{- end}}
+{{- end}}
+{{- end}}
+
+---
+
+*Gerado por wtb — workflow platform*

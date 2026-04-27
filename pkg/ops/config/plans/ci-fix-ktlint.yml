@@ -1,0 +1,45 @@
+id: ci-fix-ktlint
+name: "CI Fix — Kotlin ktlint Auto-Format"
+description: |
+  Detecta violações de ktlint, formata automaticamente via ktlintFormat,
+  verifica com ktlintCheck e commita se limpo.
+  Nunca faz push sem confirmação humana (step 4 é type: human).
+risk: low
+approval_required: [4]
+
+vars:
+  local_path: ""        # path local do repositório (ex: ~/Cobliteam/webhook)
+  module: ""            # módulo Gradle (ex: webhook-builder; vazio = todos)
+  commit_message: "fix: ktlint auto-format"
+
+steps:
+  - id: 1
+    tool: "cd {{.local_path}} && ./gradlew {{if .module}}:{{.module}}:{{end}}ktlintFormat --quiet"
+    purpose: "formatar todas as violações que o ktlint consegue corrigir automaticamente"
+    owner: auto
+
+  - id: 2
+    tool: "cd {{.local_path}} && ./gradlew {{if .module}}:{{.module}}:{{end}}ktlintCheck --quiet"
+    purpose: "verificar se restam violações após o format"
+    owner: auto
+    abort_if: "exit_code != 0"
+    abort_message: |
+      ktlintFormat não resolveu todas as violações.
+      Verifique o relatório em:
+        {{.local_path}}/{{if .module}}{{.module}}/{{end}}build/reports/ktlint/
+      Corrija manualmente as regras marcadas e re-execute o plan.
+
+  - id: 3
+    tool: "find {{.local_path}} -path '*/build/reports/ktlint/*Check*.txt' ! -empty -exec cat {} \\;"
+    purpose: "confirmar que nenhum relatório de check tem conteúdo (todos devem estar vazios)"
+    owner: auto
+
+  - id: 4
+    tool: |
+      cd {{.local_path}} && \
+      git add -A && \
+      git commit -m "{{.commit_message}}" && \
+      git push
+    purpose: "commitar e fazer push do fix — aguarda confirmação antes de executar"
+    owner: human
+    rollback: "cd {{.local_path}} && git reset HEAD~1"

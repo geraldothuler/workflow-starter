@@ -1,0 +1,110 @@
+provider:
+  id: kafka
+  name: "Kafka (Confluent Cloud)"
+  description: "Infrastructure context from Confluent Cloud REST API (clusters, topics, brokers, consumer groups, connectors)"
+
+  transport:
+    primary: http
+    http:
+      base_url: "https://api.confluent.cloud"
+      auth_type: "basic"
+      auth_value: "{{.CONFLUENT_API_KEY}}:{{.CONFLUENT_API_SECRET}}"
+      headers:
+        Content-Type: "application/json"
+        Accept: "application/json"
+      timeout: "30s"
+
+  auth:
+    credentials:
+      - name: "CONFLUENT_API_KEY"
+        description: "Confluent Cloud API Key"
+      - name: "CONFLUENT_API_SECRET"
+        description: "Confluent Cloud API Secret"
+      - name: "CONFLUENT_ENVIRONMENT"
+        description: "Confluent Cloud Environment ID (optional, filters clusters)"
+        required: false
+    resolve_order: ["env", "keyring", "encrypted-file"]
+    setup_guide: |
+      Configure Confluent Cloud credentials:
+        export CONFLUENT_API_KEY='your-cloud-api-key'
+        export CONFLUENT_API_SECRET='your-cloud-api-secret'
+        export CONFLUENT_ENVIRONMENT='env-xxxxx'  # optional
+
+  defaults:
+    namespace: ""
+    ttl: "5m"
+    resource_types: [clusters, brokers, topics, consumer_groups, connectors]
+
+  fetch_steps:
+    # Step 1: Discover clusters (management API)
+    - id: clusters
+      http_method: GET
+      http_path: "/cmk/v2/clusters"
+      http_params:
+        page_size: "100"
+      provides:
+        clusters:
+          source_path: "data"
+          fields:
+            id: "id"
+            endpoint: "spec.http_endpoint"
+            name: "spec.display_name"
+      mapping:
+        topology:
+          source_path: "data"
+          transform: "kafka_clusters_to_topology"
+
+    # Step 2: Brokers per cluster (per-cluster REST API)
+    - id: brokers
+      for_each: "clusters"
+      http_base_url: "{{.item_endpoint}}"
+      http_method: GET
+      http_path: "/kafka/v3/clusters/{{.item_id}}/brokers"
+      optional: true
+      mapping:
+        topology:
+          source_path: "data"
+          transform: "kafka_brokers_to_topology"
+
+    # Step 3: Topics per cluster
+    - id: topics
+      for_each: "clusters"
+      http_base_url: "{{.item_endpoint}}"
+      http_method: GET
+      http_path: "/kafka/v3/clusters/{{.item_id}}/topics"
+      optional: true
+      mapping:
+        topology:
+          source_path: "data"
+          transform: "kafka_topics_to_topology"
+
+    # Step 4: Consumer groups per cluster
+    - id: consumer_groups
+      for_each: "clusters"
+      http_base_url: "{{.item_endpoint}}"
+      http_method: GET
+      http_path: "/kafka/v3/clusters/{{.item_id}}/consumer-groups"
+      optional: true
+      mapping:
+        topology:
+          source_path: "data"
+          transform: "kafka_consumer_groups_to_topology"
+        health:
+          source_path: "data"
+          transform: "kafka_consumer_groups_to_health"
+
+    # Step 5: Connectors per cluster (Connect REST API)
+    - id: connectors
+      for_each: "clusters"
+      http_method: GET
+      http_path: "/connect/v1/environments/{{or .CONFLUENT_ENVIRONMENT \"_\"}}/clusters/{{.item_id}}/connectors"
+      http_params:
+        expand: "info,status"
+      optional: true
+      mapping:
+        topology:
+          source_path: "."
+          transform: "kafka_connectors_to_topology"
+        health:
+          source_path: "."
+          transform: "kafka_connectors_to_health"

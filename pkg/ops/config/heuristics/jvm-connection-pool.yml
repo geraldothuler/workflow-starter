@@ -1,0 +1,59 @@
+heuristics:
+  # connectionTimeout muito baixo: causa falha em cascata sob qualquer pico de carga.
+  # No Slick/HikariCP, connectionTimeout é tempo de espera para obter conexão do pool —
+  # não timeout TCP. Default seguro: 5000ms. Confirmado em SS-2203 (Severino, 2026-03-07).
+  - name: connection_timeout_too_low
+    conditions:
+      - field: connection_timeout_ms
+        op: "<"
+        value: 3000
+    status: critical
+    signal: "connectionTimeout={connection_timeout_ms}ms muito baixo — qualquer pico com >{pool_size} req concorrentes de DB falha em cascata após {connection_timeout_ms}ms (HikariCP: tempo de espera para obter conexão do pool, não timeout TCP)"
+    actions:
+      - "aumentar connectionTimeout para >= 5000ms no application.conf ou via env var"
+      - "verificar logs por: SQLTransientConnectionException: Connection is not available, request timed out after {connection_timeout_ms}ms"
+      - "verificar RDS CloudWatch DatabaseConnections — comparar com maxConnections configurado"
+
+  # keepaliveTime ausente: conexões idle ficam mortas sem o pool saber.
+  # RDS pode fechar conexões TCP silenciosamente (maintenance, idle timeout, proxy).
+  # Sem keepalive, o pool descobre a conexão morta apenas ao tentar usá-la — erro imediato.
+  # ATENÇÃO: propriedade é keepaliveTime (lowercase 'a') — keepAliveTime é ignorado silenciosamente.
+  - name: keepalive_not_configured
+    conditions:
+      - field: keepalive_configured
+        op: "=="
+        value: false
+    status: warn
+    signal: "keepaliveTime não configurado — conexões idle podem ficar mortas no pool sem detecção (RDS fecha TCP silenciosamente após idle timeout ou maintenance)"
+    actions:
+      - "adicionar keepaliveTime=30000 no application.conf (ATENÇÃO: lowercase 'a' — keepAliveTime é ignorado pelo binder HOCON)"
+      - "adicionar maxLifetime=600000 (10min, abaixo do wait_timeout do PostgreSQL)"
+      - "verificar RDS parameter group: idle_in_transaction_session_timeout, tcp_keepalives_idle"
+
+  # Mismatch thread pool vs connection pool: muitas threads concorrem por poucas conexões.
+  # Com connectionTimeout baixo, o excesso de threads falha rapidamente → cascata.
+  # Regra: parallelism_max > maxConnections * 3 é sinal de mismatch significativo.
+  - name: thread_pool_connection_mismatch
+    conditions:
+      - field: thread_pool_max
+        op: ">"
+        value: 60    # maxConnections (20) * 3
+    status: warn
+    signal: "thread_pool_max={thread_pool_max} muito maior que maxConnections={pool_size} — {thread_pool_max} threads competem por {pool_size} conexões; com connectionTimeout baixo, o excesso falha imediatamente"
+    actions:
+      - "reduzir parallelism-max no database-execution-context para <= maxConnections * 2"
+      - "ou aumentar maxConnections (verificar RDS max_connections primeiro)"
+      - "verificar SEVERINO_DB_NUM_THREADS e SEVERINO_DB_MAX_CONNECTIONS em prod helm values"
+
+  # Muitos restarts recentes: sinal de falha recorrente — connection pool é causa comum.
+  - name: frequent_restarts
+    conditions:
+      - field: restart_count
+        op: ">="
+        value: 2
+    status: critical
+    signal: "{service_name} teve {restart_count} restarts recentes — possível falha de connection pool ou OOM"
+    actions:
+      - "kubectl logs <pod> --previous | grep -i 'SQLTransientConnection\\|PSQLException\\|HikariPool\\|OutOfMemory'"
+      - "verificar connectionTimeout e keepaliveTime na configuração do serviço"
+      - "verificar RDS CloudWatch DatabaseConnections no horário dos restarts"

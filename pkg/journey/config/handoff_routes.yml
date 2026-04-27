@@ -1,0 +1,24 @@
+# handoff_routes.yml — Journey completion routing table
+# Absorbed from skills/wtb-journey-handoff/SKILL.md (Phase 9.1d)
+# Loaded via go:embed in pkg/journey/
+
+routes:
+  spec-builder:
+    artifact: "project-definition.md"
+    target_dir: ".workflow/"
+    description: "Gera spec completa com base nas respostas coletadas"
+
+  backlog-refiner:
+    artifact: "backlog-refined.md"
+    target_dir: ".workflow/"
+    description: "Gera backlog refinado com base nas respostas"
+
+  tech-advisor:
+    artifact: "tech-recommendation.md"
+    target_dir: ".workflow/"
+    description: "Gera relatorio de recomendacao tecnica"
+
+  deep-dive-explorer:
+    artifact: "deep-dive-{tech}.md"
+    target_dir: ".workflow/deep-dives/"
+    description: "Gera documento de deep dive para tecnologia especifica"

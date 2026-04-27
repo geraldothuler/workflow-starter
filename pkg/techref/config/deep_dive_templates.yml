@@ -1,0 +1,792 @@
+# Deep Dive Templates - templates pre-definidos para tecnologias comuns
+# Variaveis disponiveis: {{.EpicTitle}}, {{.EpicID}}, {{.StoryTitle}}, {{.StoryID}}, {{.ProjectContext}}, {{.Scope}}
+# Override: .workflow/deep-dives/deep_dive_templates.yml
+
+templates:
+
+  # --- Databases ---
+
+  PostgreSQL:
+    what_is: >
+      Banco de dados relacional open-source com suporte avancado a tipos de dados,
+      extensoes e queries complexas. Referencia em confiabilidade e conformidade ACID
+      para aplicacoes transacionais.
+    why_here: >
+      Identificado como dependencia no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Provavelmente utilizado como store primario de dados transacionais no contexto de {{.ProjectContext}}.
+    configuration:
+      - Connection pooling (pgbouncer ou pool interno) dimensionado para carga esperada
+      - Configuracao de WAL e checkpoints para durabilidade vs performance
+      - Politica de vacuuming e autovacuum ajustada ao perfil de escrita
+    patterns:
+      - Repository Pattern para isolamento de queries
+      - Migration-first schema management (flyway, golang-migrate)
+      - Read replicas para queries pesadas de leitura
+      - Connection pool com health checks periodicos
+    decisions:
+      - Definir estrategia de sharding vs particionamento para tabelas grandes
+      - Escolher entre ORM (GORM, sqlx) e queries raw conforme complexidade
+      - Estabelecer politica de backup e point-in-time recovery
+
+  MongoDB:
+    what_is: >
+      Banco de dados NoSQL orientado a documentos com schema flexivel e escalabilidade
+      horizontal nativa. Adequado para dados semi-estruturados e modelos que evoluem
+      frequentemente.
+    why_here: >
+      Referenciado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado para armazenamento de dados com schema variavel ou alta taxa de leitura no escopo de {{.Scope}}.
+    configuration:
+      - Replica set com no minimo 3 nos para alta disponibilidade
+      - Write concern e read preference ajustados ao requisito de consistencia
+      - Indexes compostos planejados com base nos access patterns
+    patterns:
+      - Schema design orientado a queries (denormalizacao intencional)
+      - Aggregation pipeline para transformacoes complexas
+      - Change streams para event-driven reativo
+      - Bucket pattern para dados de series temporais
+    decisions:
+      - Definir nivel de normalizacao vs embedding por colecao
+      - Escolher entre MongoDB Atlas (managed) ou self-hosted
+      - Estabelecer estrategia de migracao de schema (versionamento de documentos)
+
+  Redis:
+    what_is: >
+      Store de dados in-memory com suporte a estruturas avancadas (strings, hashes,
+      sorted sets, streams). Usado como cache, session store e message broker leve.
+    why_here: >
+      Presente no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Provavelmente usado como camada de cache ou session store para melhorar latencia em {{.ProjectContext}}.
+    configuration:
+      - Maxmemory-policy definida (allkeys-lru para cache, noeviction para queues)
+      - Persistencia (RDB vs AOF) conforme requisito de durabilidade
+      - Sentinel ou Cluster mode para alta disponibilidade
+    patterns:
+      - Cache-aside com TTL explicito por tipo de dado
+      - Distributed locking com Redlock para operacoes criticas
+      - Pub/Sub para notificacoes em tempo real (uso leve)
+      - Rate limiting com sorted sets ou sliding window
+    decisions:
+      - Definir estrategia de invalidacao de cache (TTL vs event-driven)
+      - Escolher entre Redis Cluster e Redis Sentinel conforme escala
+      - Avaliar necessidade de persistencia vs uso puramente efemero
+
+  Elasticsearch:
+    what_is: >
+      Motor de busca distribuido baseado em Lucene, otimizado para full-text search
+      e analytics em grandes volumes. Suporta agregacoes complexas e busca em near
+      real-time.
+    why_here: >
+      Identificado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado para busca textual, logs centralizados ou analytics no contexto de {{.Scope}}.
+    configuration:
+      - Numero de shards e replicas dimensionado para volume de dados esperado
+      - Mappings explicitos para campos criticos (evitar dynamic mapping em producao)
+      - ILM (Index Lifecycle Management) para rotacao automatica de indices
+    patterns:
+      - CQRS com Elasticsearch como read model otimizado
+      - Index per time-period para logs e dados temporais
+      - Bulk indexing com backpressure para ingestao em lote
+      - Alias-based zero-downtime reindexing
+    decisions:
+      - Definir se Elasticsearch e source-of-truth ou indice secundario
+      - Escolher entre managed (Elastic Cloud, OpenSearch) e self-hosted
+      - Estabelecer politica de retencao e archiving de indices antigos
+
+  MySQL:
+    what_is: >
+      Banco de dados relacional open-source amplamente adotado, com motor InnoDB
+      para transacoes ACID e replicacao nativa. Referencia em simplicidade operacional
+      e compatibilidade com ecossistemas web tradicionais.
+    why_here: >
+      Identificado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Provavelmente utilizado como store relacional primario ou legado no contexto de {{.ProjectContext}}.
+    configuration:
+      - InnoDB buffer pool dimensionado para ~70-80% da memoria disponivel
+      - Replicacao (source-replica) configurada para leituras escaláveis
+      - Slow query log habilitado com threshold ajustado ao perfil de queries
+    patterns:
+      - Connection pooling com ProxySQL ou pool da aplicacao
+      - Read replicas para separacao de carga leitura/escrita
+      - Migration-first schema management (Flyway, Liquibase, golang-migrate)
+      - Prepared statements para prevencao de SQL injection e reuso de planos
+    decisions:
+      - Escolher entre MySQL Community, Percona Server ou Aurora MySQL
+      - Definir estrategia de particionamento para tabelas de alto volume
+      - Estabelecer politica de backup (mysqldump, xtrabackup, snapshots)
+
+  DynamoDB:
+    what_is: >
+      Banco de dados NoSQL key-value e document store totalmente gerenciado pela AWS.
+      Oferece latencia em milissegundos de um digito em qualquer escala com capacidade
+      provisionada ou on-demand.
+    why_here: >
+      Referenciado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado para workloads de alta vazao com acesso por chave ou queries previsíveis em {{.ProjectContext}}.
+    configuration:
+      - Capacity mode (on-demand vs provisioned) escolhido conforme previsibilidade de carga
+      - GSI e LSI planejados com base nos access patterns antes da implementacao
+      - TTL habilitado para expiração automatica de itens temporarios
+    patterns:
+      - Single-table design para minimizar round-trips e custos de leitura
+      - Adjacency list pattern para modelagem de relacoes hierarquicas
+      - DynamoDB Streams + Lambda para event-driven processing
+      - Write sharding com suffix aleatorio para hot partitions
+    decisions:
+      - Definir modelo de dados single-table vs multi-table conforme complexidade
+      - Escolher entre on-demand e provisioned capacity com auto-scaling
+      - Avaliar DAX (DynamoDB Accelerator) para caching de leituras frequentes
+
+  CockroachDB:
+    what_is: >
+      Banco de dados SQL distribuido com consistencia forte (serializable isolation),
+      sobrevivencia a falhas de zona e escala horizontal automatica. Compativel com
+      protocolo PostgreSQL.
+    why_here: >
+      Presente no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado para workloads que exigem SQL distribuido com alta disponibilidade em {{.Scope}}.
+    configuration:
+      - Topology pattern (geo-partitioned, duplicated, regional) conforme requisito de latencia
+      - Zone configurations para controle de localidade dos dados
+      - Changefeed habilitado para integracao event-driven com consumidores externos
+    patterns:
+      - Multi-region deployment com locality-aware queries
+      - Schema migrations online sem downtime (ADD COLUMN, CREATE INDEX CONCURRENTLY)
+      - Follower reads para queries que toleram leitura ligeiramente atrasada
+      - Retry loop com backoff para erros de serialization (40001)
+    decisions:
+      - Escolher entre CockroachDB Serverless, Dedicated e Self-Hosted
+      - Definir estrategia de particionamento geografico por coluna de localidade
+      - Avaliar compatibilidade de ORM e drivers PostgreSQL existentes
+
+  # --- Messaging ---
+
+  Kafka:
+    what_is: >
+      Plataforma de streaming distribuido para publicacao e consumo de eventos em
+      alta vazao. Garante ordenacao por particao e retencao configuravel de mensagens.
+    why_here: >
+      Referenciado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado como backbone de eventos ou integracao assincrona entre servicos em {{.ProjectContext}}.
+    configuration:
+      - Numero de particoes por topico dimensionado para throughput e paralelismo de consumo
+      - Replication factor minimo de 3 para topicos criticos
+      - Retencao (time-based ou size-based) definida por topico
+    patterns:
+      - Event sourcing com topicos como log imutavel
+      - Consumer groups para processamento paralelo escalavel
+      - Dead letter queue para mensagens que falharam processamento
+      - Schema registry (Avro/Protobuf) para evolucao de contratos
+    decisions:
+      - Definir estrategia de particionamento (key-based vs round-robin)
+      - Escolher entre at-least-once e exactly-once semantics
+      - Avaliar Kafka Connect vs consumidores customizados para integracao
+
+  RabbitMQ:
+    what_is: >
+      Message broker AMQP com roteamento flexivel via exchanges e filas. Suporta
+      diversos patterns de messaging (work queues, pub/sub, RPC) com confirmacao
+      de entrega.
+    why_here: >
+      Presente no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Usado para comunicacao assincrona entre servicos ou processamento de tarefas em background em {{.Scope}}.
+    configuration:
+      - Politica de HA (mirrored queues ou quorum queues) para producao
+      - Prefetch count ajustado ao throughput do consumidor
+      - TTL e dead-letter exchange configurados por fila
+    patterns:
+      - Work queue com competing consumers para distribuicao de carga
+      - Topic exchange para roteamento baseado em chave
+      - RPC pattern com correlation ID para request-reply
+      - Delayed message com plugin ou TTL + dead-letter
+    decisions:
+      - Escolher entre quorum queues (consistencia) e classic mirrored (throughput)
+      - Definir estrategia de retry e dead-letter por tipo de mensagem
+      - Avaliar necessidade de message persistence vs mensagens transientes
+
+  "AWS SQS":
+    what_is: >
+      Servico de filas de mensagens totalmente gerenciado pela AWS com garantia de
+      entrega e escalabilidade automatica. Oferece filas standard (at-least-once,
+      best-effort ordering) e FIFO (exactly-once, ordenacao garantida).
+    why_here: >
+      Identificado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado para desacoplamento assincrono entre servicos ou processamento de tarefas em background em {{.ProjectContext}}.
+    configuration:
+      - Visibility timeout ajustado ao tempo de processamento do consumidor
+      - Dead-letter queue configurada com maxReceiveCount para mensagens problematicas
+      - Long polling habilitado (WaitTimeSeconds > 0) para reduzir custos e latencia
+    patterns:
+      - Fan-out com SNS → SQS para distribuicao de eventos a multiplos consumidores
+      - Batch processing com ReceiveMessage (max 10) e DeleteMessageBatch
+      - Lambda trigger para processamento serverless event-driven
+      - FIFO queues com message deduplication para operacoes idempotentes
+    decisions:
+      - Escolher entre Standard (throughput ilimitado) e FIFO (ordering garantido)
+      - Definir estrategia de retry e dead-letter processing
+      - Avaliar SQS vs EventBridge vs SNS conforme padrao de comunicacao
+
+  NATS:
+    what_is: >
+      Sistema de mensageria cloud-native de alta performance com modelo publish-subscribe,
+      request-reply e queueing. JetStream adiciona persistencia, exactly-once delivery
+      e streams com replay.
+    why_here: >
+      Referenciado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado para comunicacao inter-servicos de baixa latencia ou streaming de eventos em {{.Scope}}.
+    configuration:
+      - JetStream habilitado com storage dimensionado para retencao desejada
+      - Cluster de 3+ nos para alta disponibilidade e tolerancia a falhas
+      - Accounts e users configurados para isolamento de tenants
+    patterns:
+      - Publish-subscribe para broadcast de eventos entre servicos
+      - Queue groups para load balancing automatico entre consumidores
+      - Request-reply para RPC sincrono com timeout
+      - Key-Value store (JetStream) para estado distribuido leve
+    decisions:
+      - Definir se JetStream (persistido) ou Core NATS (efemero) por caso de uso
+      - Escolher estrategia de subject naming hierarchy para roteamento
+      - Avaliar NATS vs Kafka conforme requisitos de ordenacao e retencao
+
+  # --- API & Communication ---
+
+  GraphQL:
+    what_is: >
+      Linguagem de consulta para APIs que permite ao cliente especificar exatamente
+      os dados necessarios. Reduz over-fetching e under-fetching comuns em REST,
+      com schema tipado e introspeccao.
+    why_here: >
+      Identificado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Provavelmente adotado para oferecer API flexivel ao frontend ou consolidar
+      multiplas fontes de dados em {{.ProjectContext}}.
+    configuration:
+      - Depth limiting e complexity analysis para prevenir queries abusivas
+      - DataLoader para batching e resolucao N+1
+      - Caching por campo com diretivas de cache-control
+    patterns:
+      - Schema-first design com SDL como contrato
+      - Relay-style pagination (cursor-based) para listas grandes
+      - Federation para composicao de subgraphs em arquitetura de microservicos
+      - Persisted queries para seguranca e performance
+    decisions:
+      - Escolher entre schema-first e code-first approach
+      - Definir estrategia de versionamento (schema evolution vs breaking changes)
+      - Avaliar necessidade de subscriptions (WebSocket) vs polling
+
+  gRPC:
+    what_is: >
+      Framework RPC de alta performance baseado em HTTP/2 e Protocol Buffers.
+      Oferece streaming bidirecional, geracao de codigo e contratos fortemente
+      tipados entre servicos.
+    why_here: >
+      Referenciado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado para comunicacao inter-servicos de baixa latencia ou streaming em {{.Scope}}.
+    configuration:
+      - Protobuf schema versionado com buf ou protoc-gen
+      - Interceptors para logging, auth e tracing
+      - Keepalive e connection pooling ajustados ao perfil de comunicacao
+    patterns:
+      - Unary RPC para request-response simples
+      - Server streaming para feeds de dados em tempo real
+      - Client streaming para upload de dados em lote
+      - Health check protocol padrao para load balancers
+    decisions:
+      - Definir estrategia de versionamento de .proto (package versioning)
+      - Escolher entre gRPC-Web ou API gateway para clientes browser
+      - Estabelecer padrao de error codes e error details
+
+  JWT:
+    what_is: >
+      Padrao aberto (RFC 7519) para tokens de autenticacao auto-contidos e assinados.
+      Permite transmissao segura de claims entre partes sem necessidade de estado
+      no servidor.
+    why_here: >
+      Presente no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado para autenticacao e autorizacao stateless em {{.ProjectContext}}.
+    configuration:
+      - Algoritmo de assinatura (RS256 para assimetrico, HS256 para simetrico)
+      - Tempo de expiracao (exp) curto com refresh token para renovacao
+      - Claims padrao (iss, sub, aud, exp) validados em cada request
+    patterns:
+      - Access token + refresh token com rotacao automatica
+      - Token introspection para revogacao em cenarios criticos
+      - Claims customizados para roles e permissoes (RBAC)
+      - Middleware de validacao centralizado no API gateway
+    decisions:
+      - Escolher entre assinatura simetrica e assimetrica conforme arquitetura
+      - Definir estrategia de revogacao (blacklist vs short-lived tokens)
+      - Avaliar uso de token opaco vs JWT conforme requisitos de seguranca
+
+  # --- Languages ---
+
+  Go:
+    what_is: >
+      Linguagem compilada com tipagem estatica, concorrencia nativa via goroutines
+      e compilacao rapida. Ideal para servicos de backend, CLIs e ferramentas de
+      infraestrutura.
+    why_here: >
+      Identificado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Usado como linguagem principal de backend ou tooling em {{.ProjectContext}}.
+    configuration:
+      - Go modules com versionamento semantico e go.sum para integridade
+      - GOMAXPROCS ajustado ao ambiente de deploy (container-aware)
+      - Build tags para compilacao condicional por ambiente
+    patterns:
+      - Interface-driven design para testabilidade e desacoplamento
+      - Error wrapping com fmt.Errorf e errors.Is/As para rastreamento
+      - Context propagation para cancelamento e deadlines
+      - Table-driven tests como padrao de teste unitario
+    decisions:
+      - Definir layout de projeto (Standard Go Project Layout vs flat)
+      - Escolher entre stdlib net/http e frameworks (chi, echo, fiber)
+      - Estabelecer estrategia de dependency injection (wire, manual, fx)
+
+  Python:
+    what_is: >
+      Linguagem interpretada de proposito geral com ecossistema vasto para data
+      science, automacao e backend. Tipagem dinamica com suporte a type hints
+      para documentacao e analise estatica.
+    why_here: >
+      Referenciado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Provavelmente utilizado para scripts, data pipelines ou APIs em {{.Scope}}.
+    configuration:
+      - Virtual environment (venv ou poetry) com lock file para reproducibilidade
+      - Type hints habilitados com mypy ou pyright para checagem estatica
+      - Linting com ruff ou flake8 e formatacao com black
+    patterns:
+      - Repository pattern com SQLAlchemy para acesso a dados
+      - Dependency injection via construtores (sem framework pesado)
+      - Async/await com asyncio para I/O bound workloads
+      - Pydantic models para validacao de dados na borda
+    decisions:
+      - Escolher entre FastAPI, Django e Flask conforme complexidade do projeto
+      - Definir estrategia de gerenciamento de dependencias (pip, poetry, uv)
+      - Avaliar uso de async vs sync conforme perfil de carga
+
+  TypeScript:
+    what_is: >
+      Superset tipado de JavaScript que compila para JS puro. Adiciona tipagem
+      estatica, interfaces e tooling avancado ao ecossistema JavaScript, reduzindo
+      bugs em tempo de desenvolvimento.
+    why_here: >
+      Presente no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado como linguagem principal de frontend ou backend Node.js em {{.ProjectContext}}.
+    configuration:
+      - tsconfig.json com strict mode habilitado para maxima seguranca de tipos
+      - Path aliases configurados para imports limpos
+      - ESLint + Prettier integrados para consistencia de codigo
+    patterns:
+      - Discriminated unions para modelagem de estados
+      - Zod ou io-ts para validacao runtime de dados externos
+      - Generics para abstrair logica reutilizavel com type safety
+      - Barrel exports para organizacao de modulos publicos
+    decisions:
+      - Definir nivel de strictness no tsconfig (strict vs gradual adoption)
+      - Escolher runtime (Node.js, Deno, Bun) conforme ecossistema
+      - Estabelecer convencao de tipos (interfaces vs types, nominais vs estruturais)
+
+  # --- Frontend ---
+
+  React:
+    what_is: >
+      Biblioteca JavaScript para construcao de interfaces declarativas baseadas
+      em componentes. Utiliza virtual DOM e unidirectional data flow para UIs
+      previsíveis e composiveis.
+    why_here: >
+      Identificado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Usado como framework de UI principal para a aplicacao frontend em {{.ProjectContext}}.
+    configuration:
+      - Vite ou Next.js como build tool com HMR configurado
+      - State management escolhido (Zustand, Redux Toolkit, React Query)
+      - Testing com React Testing Library + Vitest ou Jest
+    patterns:
+      - Composition pattern com children e render props
+      - Custom hooks para logica reutilizavel entre componentes
+      - Colocation de estilos, testes e tipos por feature
+      - Suspense + Error Boundaries para loading e error states
+    decisions:
+      - Escolher entre SPA (Vite) e SSR/SSG (Next.js) conforme requisito de SEO
+      - Definir estrategia de state management (local vs global vs server state)
+      - Estabelecer padrao de estilizacao (CSS Modules, Tailwind, styled-components)
+
+  "Next.js":
+    what_is: >
+      Framework React com renderizacao hibrida (SSR, SSG, ISR) e roteamento
+      baseado em filesystem. Oferece API routes, otimizacao de imagens e
+      deploy simplificado via Vercel.
+    why_here: >
+      Referenciado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Adotado para renderizacao server-side ou geração estatica no frontend de {{.ProjectContext}}.
+    configuration:
+      - next.config.js com image domains, redirects e headers de seguranca
+      - Middleware para auth e geolocation na edge
+      - Caching strategy (ISR revalidation, on-demand revalidation)
+    patterns:
+      - App Router com server components como padrao
+      - Server Actions para mutacoes sem API intermediaria
+      - Parallel routes e intercepting routes para UIs complexas
+      - Streaming SSR com Suspense para time-to-first-byte otimizado
+    decisions:
+      - Escolher entre App Router e Pages Router (migração vs greenfield)
+      - Definir estrategia de data fetching (server components vs client-side)
+      - Avaliar deploy em Vercel vs self-hosted (Docker/Node.js)
+
+  # --- Infrastructure ---
+
+  Docker:
+    what_is: >
+      Plataforma de containerizacao que empacota aplicacoes e dependencias em
+      imagens reprodutiveis. Garante paridade entre ambientes de desenvolvimento,
+      CI e producao.
+    why_here: >
+      Presente no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado para containerizacao de servicos ou ambiente de desenvolvimento local em {{.Scope}}.
+    configuration:
+      - Multi-stage build para imagens de producao enxutas
+      - .dockerignore configurado para excluir artefatos desnecessarios
+      - Health check definido no Dockerfile ou docker-compose
+    patterns:
+      - Builder pattern com multi-stage para separar build e runtime
+      - Docker Compose para orquestracao de ambiente local
+      - Non-root user como padrao de seguranca em containers
+      - Layer caching otimizado (dependencias antes do codigo)
+    decisions:
+      - Definir imagem base (distroless, alpine, debian-slim)
+      - Escolher entre Docker Compose e ferramentas de dev (Tilt, Skaffold)
+      - Estabelecer politica de tagging (semver, sha, latest)
+
+  Kubernetes:
+    what_is: >
+      Orquestrador de containers para deploy, escalonamento e gerenciamento
+      de workloads distribuidos. Oferece self-healing, service discovery e
+      rollouts declarativos.
+    why_here: >
+      Identificado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Usado como plataforma de deploy e orquestracao em producao para {{.ProjectContext}}.
+    configuration:
+      - Resource requests e limits definidos por container
+      - Liveness e readiness probes configurados por servico
+      - NetworkPolicies para segmentacao de trafego entre namespaces
+    patterns:
+      - Helm charts ou Kustomize para templating de manifests
+      - Sidecar pattern para logging, proxy e observabilidade
+      - HPA (Horizontal Pod Autoscaler) baseado em metricas customizadas
+      - GitOps com ArgoCD ou Flux para deploy declarativo
+    decisions:
+      - Escolher entre Helm e Kustomize como estrategia de packaging
+      - Definir namespace strategy (por servico, por ambiente, por equipe)
+      - Avaliar service mesh (Istio, Linkerd) vs ingress controller simples
+
+  AWS:
+    what_is: >
+      Plataforma de cloud computing com servicos gerenciados para computacao,
+      armazenamento, banco de dados e networking. Oferece escalabilidade
+      elastica e modelo pay-as-you-go.
+    why_here: >
+      Referenciado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado como provider de infraestrutura cloud para {{.ProjectContext}}.
+    configuration:
+      - IAM roles com least-privilege para cada servico
+      - VPC com subnets publicas e privadas segmentadas
+      - CloudWatch alarms para metricas criticas de cada servico
+    patterns:
+      - Infrastructure as Code com Terraform ou CDK
+      - Least-privilege IAM com boundaries por equipe
+      - Multi-AZ para alta disponibilidade de servicos criticos
+      - S3 lifecycle policies para otimizacao de custo de storage
+    decisions:
+      - Definir estrategia de organizacao de contas (multi-account vs single)
+      - Escolher entre ECS, EKS ou Lambda conforme perfil de workload
+      - Estabelecer politica de tagging para cost allocation e compliance
+
+  Terraform:
+    what_is: >
+      Ferramenta de Infrastructure as Code declarativa com suporte multi-cloud.
+      Gerencia recursos via providers e mantem estado para planejamento e
+      aplicacao incremental de mudancas.
+    why_here: >
+      Presente no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Usado para provisionamento e gerenciamento de infraestrutura como codigo em {{.Scope}}.
+    configuration:
+      - Remote state com locking (S3 + DynamoDB ou Terraform Cloud)
+      - Workspaces ou directory-based separation por ambiente
+      - Provider versions pinadas para reproducibilidade
+    patterns:
+      - Modulos reutilizaveis com interface clara (variables + outputs)
+      - Terragrunt para DRY em configuracoes multi-ambiente
+      - Plan + Apply pipeline com approval gate em CI/CD
+      - State management com import para recursos pre-existentes
+    decisions:
+      - Escolher entre Terraform OSS, Terraform Cloud e OpenTofu
+      - Definir granularidade de state files (monolito vs por servico)
+      - Estabelecer convencao de modulos (registry privado vs local)
+
+  Azure:
+    what_is: >
+      Plataforma de cloud computing da Microsoft com servicos gerenciados para computacao,
+      dados, AI e DevOps. Integracao nativa com ecossistema Microsoft (Active Directory,
+      .NET, GitHub) e modelo hibrido com Azure Arc.
+    why_here: >
+      Identificado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado como provider de infraestrutura cloud ou servicos gerenciados em {{.ProjectContext}}.
+    configuration:
+      - Azure AD com managed identities para autenticacao entre servicos (sem secrets)
+      - Resource Groups e tagging strategy para organizacao e cost management
+      - Azure Monitor e Application Insights habilitados para observabilidade
+    patterns:
+      - Infrastructure as Code com Bicep ou Terraform (azurerm provider)
+      - Managed identities para zero-secret authentication entre servicos
+      - Azure Front Door ou Application Gateway para roteamento e WAF
+      - Hub-spoke network topology para isolamento de workloads
+    decisions:
+      - Definir estrategia de subscriptions (por ambiente, por equipe, por projeto)
+      - Escolher entre AKS, App Service ou Container Apps conforme perfil de workload
+      - Estabelecer politica de RBAC com Azure AD groups e custom roles
+
+  GCP:
+    what_is: >
+      Plataforma de cloud computing do Google com forca em data analytics, machine learning
+      e infraestrutura de rede global. Oferece servicos gerenciados como BigQuery, GKE e
+      Cloud Run com billing granular por segundo.
+    why_here: >
+      Referenciado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado como provider de cloud para servicos de dados, compute ou ML em {{.ProjectContext}}.
+    configuration:
+      - IAM com service accounts e workload identity para autenticacao entre servicos
+      - VPC com subnets regionais e firewall rules baseadas em tags
+      - Cloud Logging e Cloud Monitoring habilitados com log sinks para retencao
+    patterns:
+      - Infrastructure as Code com Terraform (google provider) ou Deployment Manager
+      - Cloud Run para workloads serverless containerizados com scale-to-zero
+      - Pub/Sub como backbone de eventos entre servicos GCP
+      - BigQuery para analytics e data warehouse com separacao storage/compute
+    decisions:
+      - Definir estrategia de projetos GCP (por ambiente, por servico, por equipe)
+      - Escolher entre GKE, Cloud Run e Compute Engine conforme perfil de workload
+      - Avaliar uso de BigQuery vs alternativas para analytics e reporting
+
+  Heroku:
+    what_is: >
+      Plataforma como servico (PaaS) que simplifica deploy e operacao de aplicacoes web.
+      Oferece buildpacks automaticos, add-ons gerenciados e pipeline de review apps com
+      foco em developer experience.
+    why_here: >
+      Presente no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado para deploy simplificado e prototipacao rapida em {{.Scope}}.
+    configuration:
+      - Procfile definindo processos (web, worker) com scaling independente
+      - Config vars para variaveis de ambiente sem secrets no codigo
+      - Heroku Postgres ou add-ons configurados via heroku addons
+    patterns:
+      - Git-based deploy com pipeline (development → staging → production)
+      - Review apps para preview automatico de pull requests
+      - Worker dynos com Redis ou RabbitMQ para processamento em background
+      - Release phase para migrações de banco automaticas no deploy
+    decisions:
+      - Avaliar Heroku vs alternativas (Railway, Render, Fly.io) para custo-beneficio
+      - Definir estrategia de scaling (horizontal dynos vs performance-tier)
+      - Escolher entre Heroku Postgres e external database conforme requisitos
+
+  Vercel:
+    what_is: >
+      Plataforma de deploy otimizada para frameworks frontend (Next.js, Nuxt, SvelteKit)
+      com edge network global, serverless functions e preview deployments automaticos.
+      Foco em performance e developer experience.
+    why_here: >
+      Identificado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado como plataforma de deploy frontend ou fullstack serverless em {{.ProjectContext}}.
+    configuration:
+      - vercel.json com rewrites, headers de seguranca e redirects
+      - Environment variables por branch (production, preview, development)
+      - Edge Config para feature flags e configuracao em tempo real
+    patterns:
+      - Preview deployments automaticos por pull request com URL unica
+      - ISR (Incremental Static Regeneration) para conteudo semi-dinamico
+      - Edge Functions para logica de roteamento e personalizacao em baixa latencia
+      - Monorepo support com turbo remote caching para builds rapidos
+    decisions:
+      - Avaliar Vercel vs self-hosted (Docker/Node) para controle e custo
+      - Definir estrategia de caching (ISR, on-demand, edge cache)
+      - Escolher entre Serverless Functions e Edge Functions conforme requisitos de latencia
+
+  # --- Observability ---
+
+  Prometheus:
+    what_is: >
+      Sistema de monitoramento e alerting baseado em metricas time-series com
+      modelo pull. Oferece linguagem de consulta PromQL poderosa e integracao
+      nativa com Grafana e Alertmanager.
+    why_here: >
+      Identificado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado para coleta de metricas e alerting dos servicos em {{.ProjectContext}}.
+    configuration:
+      - Scrape interval e retention period dimensionados para volume de metricas
+      - Relabeling rules para filtrar e enriquecer labels no ingest
+      - Alertmanager com routing por severidade e equipe
+    patterns:
+      - RED method (Rate, Errors, Duration) para metricas de servicos
+      - USE method (Utilization, Saturation, Errors) para metricas de infraestrutura
+      - Recording rules para pre-computar queries frequentes e pesadas
+      - Service discovery automatico (Kubernetes, Consul, EC2)
+    decisions:
+      - Escolher entre Prometheus standalone e solucao managed (Thanos, Mimir, Grafana Cloud)
+      - Definir estrategia de long-term storage para metricas historicas
+      - Estabelecer convencao de naming para metricas customizadas (namespace_subsystem_name_unit)
+
+  Grafana:
+    what_is: >
+      Plataforma open-source de visualizacao e observabilidade com suporte a multiplas
+      datasources (Prometheus, Loki, Elasticsearch, CloudWatch). Oferece dashboards
+      interativos, alerting unificado e integracao com ecossistema LGTM.
+    why_here: >
+      Referenciado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado para visualizacao de metricas, logs e traces dos servicos em {{.ProjectContext}}.
+    configuration:
+      - Datasources configurados via provisioning (YAML) para reproducibilidade
+      - Dashboard provisioning via JSON models versionados em Git
+      - Alerting rules com notification channels (Slack, PagerDuty, email)
+    patterns:
+      - Dashboard-as-code com Grafonnet (Jsonnet) ou Terraform provider
+      - LGTM stack (Loki + Grafana + Tempo + Mimir) para observabilidade unificada
+      - Variables e template queries para dashboards reutilizaveis entre servicos
+      - Annotation markers para correlacionar deploys e incidentes com metricas
+    decisions:
+      - Escolher entre Grafana OSS, Grafana Enterprise e Grafana Cloud
+      - Definir estrategia de organizacao de dashboards (por equipe, por servico, por camada)
+      - Avaliar Grafana Loki vs Elasticsearch para centralizacao de logs
+
+  Datadog:
+    what_is: >
+      Plataforma SaaS de observabilidade unificada com metricas, traces, logs e security
+      monitoring em um unico produto. Oferece APM distribuido, infrastructure monitoring
+      e real user monitoring (RUM) com correlacao automatica.
+    why_here: >
+      Presente no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado para monitoramento end-to-end e APM dos servicos em {{.Scope}}.
+    configuration:
+      - Datadog Agent instalado em cada host ou como sidecar em containers
+      - APM tracing habilitado com auto-instrumentation para linguagem em uso
+      - Log collection com parsing rules e indexes por retencao
+    patterns:
+      - Unified tagging (env, service, version) para correlacao entre sinais
+      - Service catalog para inventario e ownership de servicos
+      - SLO tracking com monitors e burn rate alerts
+      - Custom metrics com DogStatsD para metricas de negocio
+    decisions:
+      - Definir quais produtos Datadog ativar (APM, Logs, Infra, RUM) conforme orcamento
+      - Escolher estrategia de retencao de logs (indexes vs archives)
+      - Estabelecer padrao de tagging e naming para metricas customizadas
+
+  # --- Backend Frameworks ---
+
+  "Spring Boot":
+    what_is: >
+      Framework Java opinativo para criacao de aplicacoes standalone com
+      auto-configuracao, servidor embarcado e ecossistema Spring integrado.
+      Padrao de mercado para microservicos JVM.
+    why_here: >
+      Referenciado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado como framework principal de backend Java/Kotlin em {{.ProjectContext}}.
+    configuration:
+      - application.yml com profiles por ambiente (dev, staging, prod)
+      - Actuator endpoints habilitados para health, metrics e info
+      - Connection pool (HikariCP) dimensionado para carga esperada
+    patterns:
+      - Layered architecture (Controller → Service → Repository)
+      - Spring Security com filtros customizados para auth
+      - Spring Data JPA com specifications para queries dinamicas
+      - Testcontainers para testes de integracao com dependencias reais
+    decisions:
+      - Escolher entre Java e Kotlin como linguagem principal
+      - Definir estrategia de migracao de versao (Spring Boot 2.x → 3.x)
+      - Avaliar Spring Cloud para service discovery e config distribuida
+
+  Django:
+    what_is: >
+      Framework web Python full-stack com ORM, admin interface, autenticacao e
+      sistema de templates integrados. Segue filosofia batteries-included com
+      convencoes fortes para desenvolvimento rapido e seguro.
+    why_here: >
+      Identificado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado como framework backend principal para aplicacao web em {{.ProjectContext}}.
+    configuration:
+      - settings.py com separacao por ambiente (base, dev, prod) via django-environ
+      - ALLOWED_HOSTS, CSRF e CORS configurados para seguranca em producao
+      - Database routing e connection pooling (django-db-connection-pool ou pgbouncer)
+    patterns:
+      - Fat models, thin views para encapsulamento de logica de negocio
+      - Django REST Framework para APIs RESTful com serializers e viewsets
+      - Signals para desacoplamento de side-effects entre apps
+      - Celery + Redis/RabbitMQ para processamento assincrono de tarefas
+    decisions:
+      - Escolher entre Django REST Framework e Django Ninja para APIs
+      - Definir estrategia de migracao e versionamento de schema (squash, data migrations)
+      - Avaliar Django async views vs sync conforme perfil de carga
+
+  FastAPI:
+    what_is: >
+      Framework Python moderno para APIs com tipagem nativa (Pydantic), documentacao
+      automatica (OpenAPI/Swagger) e suporte async/await. Alta performance via Starlette
+      e ASGI com validacao automatica de request/response.
+    why_here: >
+      Referenciado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado para construcao de APIs de alta performance em {{.Scope}}.
+    configuration:
+      - Uvicorn como ASGI server com workers dimensionados para carga
+      - Pydantic settings com .env para configuracao por ambiente
+      - CORS middleware configurado para origens permitidas
+    patterns:
+      - Dependency injection nativo para servicos, auth e database sessions
+      - Router modular com prefixo e tags para organizacao de endpoints
+      - Background tasks para operacoes fire-and-forget leves
+      - Middleware chain para logging, timing e error handling centralizado
+    decisions:
+      - Escolher entre SQLAlchemy async e Tortoise ORM para acesso a dados
+      - Definir estrategia de deploy (Uvicorn standalone, Gunicorn + Uvicorn workers, containerizado)
+      - Avaliar uso de async em todo o stack vs sync com thread pool para I/O blocking
+
+  NestJS:
+    what_is: >
+      Framework Node.js progressivo com TypeScript nativo, arquitetura modular
+      inspirada em Angular e suporte a REST, GraphQL e microservicos. Oferece
+      dependency injection, decorators e testabilidade como cidadaos de primeira classe.
+    why_here: >
+      Presente no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado como framework backend TypeScript para APIs ou microservicos em {{.ProjectContext}}.
+    configuration:
+      - Modulos organizados por dominio com providers e controllers
+      - ConfigModule com validacao de env vars via Joi ou class-validator
+      - TypeORM ou Prisma configurado com migrations e connection pooling
+    patterns:
+      - Module-based architecture com encapsulamento de dependencias
+      - Guards e interceptors para auth, logging e transformacao de response
+      - Pipes para validacao e transformacao de input (class-validator + class-transformer)
+      - CQRS module para separacao de commands e queries em dominios complexos
+    decisions:
+      - Escolher entre Express e Fastify como HTTP adapter
+      - Definir estrategia de ORM (TypeORM, Prisma, MikroORM) conforme preferencia
+      - Avaliar microservices transport (TCP, Redis, NATS, gRPC) vs monolito modular
+
+  # --- Security ---
+
+  "OAuth 2.0":
+    what_is: >
+      Framework de autorizacao (RFC 6749) que permite acesso delegado a recursos
+      protegidos sem compartilhar credenciais. Define grant types (authorization code,
+      client credentials, device code) e se integra com OpenID Connect para autenticacao.
+    why_here: >
+      Identificado no epico "{{.EpicTitle}}" ({{.EpicID}}).
+      Utilizado para autorizacao delegada e integracao com identity providers em {{.ProjectContext}}.
+    configuration:
+      - Grant type selecionado conforme tipo de cliente (web, SPA, machine-to-machine)
+      - Scopes definidos com granularidade adequada ao modelo de permissoes
+      - Token lifetimes (access token curto, refresh token com rotacao)
+    patterns:
+      - Authorization Code + PKCE para SPAs e mobile (sem client secret)
+      - Client Credentials para comunicacao machine-to-machine entre servicos
+      - Token introspection ou JWT validation no API gateway centralizado
+      - Refresh token rotation com deteccao de reuso para seguranca
+    decisions:
+      - Escolher entre identity provider managed (Auth0, Okta, Keycloak) e custom
+      - Definir estrategia de scopes (resource-based vs permission-based)
+      - Avaliar OpenID Connect (OIDC) para autenticacao alem de autorizacao

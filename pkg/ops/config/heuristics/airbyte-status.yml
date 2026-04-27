@@ -1,0 +1,21 @@
+heuristics:
+  # Muitas falhas — padrão sistêmico, não pontual.
+  # Threshold 3: acima de 3 conexões falhando indica problema de infraestrutura ou plataforma.
+  - name: many_failures
+    conditions:
+      - field: failed_connections
+        op: ">"
+        value: 3
+    status: critical
+    signal: "{failed_connections}/{total_connections} connections with failed syncs"
+    actions:
+      - "investigate failed sync connections"
+
+  # Falhas pontuais — atenção, mas não catastrófico.
+  - name: some_failures
+    conditions:
+      - field: failed_connections
+        op: ">"
+        value: 0
+    status: warn
+    signal: "{failed_connections}/{total_connections} connections with failed syncs"

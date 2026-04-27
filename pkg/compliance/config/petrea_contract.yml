@@ -1,0 +1,26 @@
+# petrea_contract.yml — Clausula Petrea guardrail contract
+# Moved from skills/wtb-petrea-clause-guardrail/contract.yml (Phase 9.2f)
+# Used by pkg/doccheck CheckClausulaPatrea() to validate _core/metacognition.md
+
+id: petrea-clause
+version: "1.0"
+source: "_core/metacognition.md"
+anchors:
+  - id: section_header
+    contains: "CLAUSULA PETREA"
+    description: "Main Clausula Petrea section header must exist"
+  - id: rule_all_options
+    contains: "Apresentar todas as abordagens"
+    description: "Rule 1: present all legitimate approaches"
+  - id: rule_tradeoffs
+    contains: "tradeoffs"
+    description: "Rule 2: explicit tradeoffs per option"
+  - id: rule_score
+    contains: "40%"
+    description: "Rule 3: weighted score (40% value, 30% viability, 30% low-risk)"
+  - id: rule_recommendation
+    contains: "Recomendar o melhor plano COM justificativa"
+    description: "Rule 4: recommendation with justification citing context"
+  - id: invariant
+    contains: "Nunca recomendar sem apresentar alternativas"
+    description: "Core invariant: never recommend without alternatives"

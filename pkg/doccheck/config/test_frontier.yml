@@ -1,0 +1,46 @@
+# test_frontier.yml — Integration test frontier classification
+# Absorbed from skills/wtb-integration-test-evaluator/SKILL.md (Phase 9.2c)
+# Loaded via go:embed in pkg/doccheck/
+
+frontiers:
+  - id: pure_logic
+    name: "Logica Pura"
+    detect: ["no I/O", "deterministic", "no external calls"]
+    required: [unit]
+    cost: "$0.00"
+
+  - id: llm_crossing
+    name: "LLM/API Crossing"
+    detect: ["calls llm.Client", "parses LLM response"]
+    required: [unit, integration_mock]
+    cost: "$0.01-0.05"
+
+  - id: http_handler
+    name: "HTTP Handler"
+    detect: ["http.ResponseWriter", "http.Request"]
+    required: [unit, httptest]
+    cost: "$0.00"
+
+  - id: template_rendering
+    name: "Template/CSS/JS"
+    detect: ["templates/*.html", "GenerateStaticHTML"]
+    required: [unit, httptest, browser]
+    cost: "$0.00 (needs Chrome)"
+
+  - id: filesystem
+    name: "Filesystem I/O"
+    detect: ["os.WriteFile", "os.MkdirAll"]
+    required: [unit_with_tmpdir]
+    cost: "$0.00"
+
+  - id: subprocess
+    name: "Subprocess Execution"
+    detect: ["exec.Command", "exec.CommandContext"]
+    required: [unit, integration_mock]
+    cost: "$0.00"
+
+  - id: database
+    name: "Database I/O"
+    detect: ["sql.DB", "pgx.Conn"]
+    required: [unit_mock, integration_db]
+    cost: "$0.00 (needs DB)"

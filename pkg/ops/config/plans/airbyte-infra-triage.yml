@@ -1,0 +1,39 @@
+id: airbyte-infra-triage
+name: "Airbyte Infra Instability Triage"
+description: "Diagnose whether Airbyte sync failures are caused by infra instability (node evictions/drains) vs connector issues. Run when syncs fail with null failureType or fast-fail pattern (<3min duration)."
+risk: low
+approval_required: []
+
+vars:
+  aws_profile: ""
+  kubectl_context: ""
+  namespace: ""
+  airbyte_url: ""
+  connection_id: ""
+  page_size: "5"
+
+steps:
+  - id: 1
+    tool: "wtb ops auth --profile {{.aws_profile}}"
+    purpose: "verificar token AWS SSO antes de acessar cluster"
+    owner: auto
+
+  - id: 2
+    tool: "kubectl port-forward svc/dp-airbyte-airbyte-server-svc 18001:8001 -n data-platform --context {{.kubectl_context}} &"
+    purpose: "abrir port-forward para Airbyte API (pular se já estiver ativo em 18001)"
+    owner: human
+
+  - id: 3
+    tool: "curl -sf -X POST {{.airbyte_url}}/api/v1/jobs/list -H 'Content-Type: application/json' -d '{\"configId\":\"{{.connection_id}}\",\"configTypes\":[\"sync\"],\"pagination\":{\"pageSize\":{{.page_size}}}}' | jq '[.jobs[] | {id: .job.id, status: .job.status, duration_s: (.job.updatedAt - .job.createdAt), null_failures: ([.attempts[].failures[]? | select(.failureType == null)] | length)}]'"
+    purpose: "detectar jobs com failureType=null — sinal de pod killed por infra, não erro do connector"
+    owner: auto
+
+  - id: 4
+    tool: "kubectl get events -n {{.namespace}} --context {{.kubectl_context}} --sort-by=.lastTimestamp | grep -E 'FailedScheduling|TaintManagerEviction|Evict' | tail -20"
+    purpose: "verificar eventos de infra recentes — TaintManagerEviction confirma node drain/upgrade como causa"
+    owner: auto
+
+  - id: 5
+    tool: "kubectl get nodes --context {{.kubectl_context}} -o wide | grep -E 'NotReady|SchedulingDisabled' || echo 'todos os nodes Ready'"
+    purpose: "verificar nodes em estado degradado que podem estar causando evictions"
+    owner: auto

@@ -1,0 +1,23 @@
+heuristics:
+  # CI com falhas confirmadas — bloqueia merge.
+  - name: ci_failed
+    conditions:
+      - field: failed
+        op: ">"
+        value: 0
+    status: critical
+    signal: "{failed}/{total} checks falharam no PR #{pr}"
+    actions:
+      - "fix CI failures before merging"
+      - "wtb ops test-diagnose --path <module>/build/test-results/test --module <module>"
+
+  # CI ainda em execução — estado intermediário, não conclusivo.
+  - name: ci_running
+    conditions:
+      - field: running
+        op: ">"
+        value: 0
+    status: warn
+    signal: "{running}/{total} checks ainda em execução"
+    actions:
+      - "aguardando {running} check(s) — poll novamente em instantes"

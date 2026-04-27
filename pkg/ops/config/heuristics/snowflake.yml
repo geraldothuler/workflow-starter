@@ -1,0 +1,12 @@
+heuristics:
+  # Query lenta — acima de 30s sugere problema de performance ou warehouse subutilizado.
+  # Threshold em ms: 30000 = 30s.
+  - name: slow_query
+    conditions:
+      - field: elapsed_ms
+        op: ">"
+        value: 30000
+    status: warn
+    signal: "Snowflake: query slow ({elapsed_ms}ms) — check query performance"
+    actions:
+      - "check query performance, consider optimization"

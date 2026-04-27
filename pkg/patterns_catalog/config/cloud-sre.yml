@@ -1,0 +1,125 @@
+# ============================================================================
+# Cloud/SRE + Design-First Patterns (6)
+# Sources: Cloud Design Patterns (Microsoft), Release It! (Nygard),
+#          Continuous Delivery (Humble/Farley), NIST, Industry
+# ============================================================================
+
+categories:
+  - id: scalability
+    name: "Scalability"
+  - id: resilience
+    name: "Resilience & Reliability"
+  - id: security
+    name: "Security"
+  - id: structural
+    name: "Structural Patterns"
+  - id: design-first
+    name: "Design-First Approaches"
+
+patterns:
+
+  - id: api-first
+    name: "API First"
+    type: pattern
+    level: universal
+    category: design-first
+    source:
+      reference: "Industry Best Practice"
+      author: "OpenAPI/Swagger Community"
+    description: "Design the API contract (OpenAPI/Swagger) before implementation"
+    when_to_use:
+      - "Multiple teams consume the same API"
+      - "Frontend and backend developed in parallel"
+      - "Need contract-driven testing and code generation"
+      - "Public or partner-facing APIs"
+    anti_patterns:
+      - "Internal tools with single consumer"
+      - "Rapid prototyping where API shape changes constantly"
+    related_patterns: ["api-gateway", "bff"]
+    keywords: ["OpenAPI", "Swagger", "contract", "schema-first", "code generation"]
+
+  - id: cache-aside
+    name: "Cache-Aside (Lazy Loading)"
+    type: pattern
+    level: universal
+    category: scalability
+    source:
+      reference: "Cloud Design Patterns"
+      author: "Microsoft"
+    description: "Application manages cache explicitly: check cache first, load from DB on miss"
+    when_to_use:
+      - "Read-heavy workload with infrequent writes"
+      - "Data tolerates short staleness"
+    anti_patterns:
+      - "Write-heavy workload where invalidation dominates"
+    related_patterns: ["lazy-load"]
+    keywords: ["cache", "Redis", "Memcached", "read-heavy", "TTL", "performance"]
+
+  - id: bulkhead
+    name: "Bulkhead"
+    type: pattern
+    level: universal
+    category: resilience
+    source:
+      reference: "Release It!"
+      author: "Michael Nygard"
+    description: "Isolates elements into pools so failure in one does not cascade"
+    when_to_use:
+      - "Multiple consumers share a common service with different priorities"
+      - "Multi-tenant system requiring tenant isolation"
+    anti_patterns:
+      - "Single-threaded application"
+    related_patterns: ["circuit-breaker"]
+    keywords: ["isolation", "pool", "thread pool", "connection pool", "tenant"]
+
+  - id: rate-limiting
+    name: "Rate Limiting"
+    type: pattern
+    level: universal
+    category: security
+    source:
+      reference: "Cloud Design Patterns"
+      author: "Microsoft"
+    description: "Controls the rate of requests to protect services from overload and abuse"
+    when_to_use:
+      - "Public-facing API needing abuse protection"
+      - "Shared resources with fair-use requirements"
+    anti_patterns:
+      - "Internal-only services with trusted callers"
+    related_patterns: ["api-gateway", "bulkhead"]
+    keywords: ["throttle", "token bucket", "sliding window", "quota", "DDoS"]
+
+  - id: feature-flags
+    name: "Feature Flags (Feature Toggles)"
+    type: pattern
+    level: universal
+    category: structural
+    source:
+      reference: "Continuous Delivery"
+      author: "Jez Humble, David Farley"
+    description: "Runtime switches that enable or disable features without deployment"
+    when_to_use:
+      - "Gradual rollout of new features (canary, percentage-based)"
+      - "A/B testing different implementations"
+      - "Kill switch for risky features in production"
+    anti_patterns:
+      - "Accumulation of stale flags (tech debt)"
+    related_patterns: ["strangler-fig"]
+    keywords: ["toggle", "canary", "rollout", "A/B test", "LaunchDarkly"]
+
+  - id: zero-trust
+    name: "Zero Trust Security"
+    type: pattern
+    level: universal
+    category: security
+    source:
+      reference: "NIST SP 800-207"
+      author: "NIST"
+    description: "Never trust, always verify — every request is authenticated regardless of network location"
+    when_to_use:
+      - "Microservices communicating over network boundaries"
+      - "Multi-tenant SaaS with strict data isolation"
+    anti_patterns:
+      - "Isolated internal network with physical security"
+    related_patterns: ["service-mesh"]
+    keywords: ["mTLS", "JWT", "OAuth", "RBAC", "authentication", "authorization"]

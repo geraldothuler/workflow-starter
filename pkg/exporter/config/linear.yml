@@ -1,0 +1,82 @@
+# ============================================================================
+# LINEAR EXPORTER — GraphQL over HTTP
+# ============================================================================
+#
+# Pushes backlog to Linear via GraphQL API.
+# Epics → Linear Projects; Stories → Linear Issues linked to project.
+#
+# Requires: LINEAR_API_KEY
+# API Docs: https://developers.linear.app/docs/graphql/working-with-the-graphql-api
+#
+# ============================================================================
+
+exporter:
+  id: linear
+  name: "Linear"
+  description: "Push backlog to Linear"
+
+  auth:
+    credentials:
+      - name: "LINEAR_API_KEY"
+        required: true
+        description: "Linear API key (https://linear.app/settings/api)"
+    resolve_order: ["env", "keyring", "encrypted-file"]
+    setup_guide: |
+      1. Get API key: https://linear.app/settings/api
+      2. Configure: export LINEAR_API_KEY='lin_api_xxx...'
+
+  transport:
+    type: http
+    base_url: "https://api.linear.app"
+    auth_type: bearer
+    auth_value: "{{.LINEAR_API_KEY}}"
+    headers:
+      Content-Type: "application/json"
+    timeout: "30s"
+
+  setup:
+    list_projects:
+      method: POST
+      path: "/graphql"
+      body: |
+        {"query": "{ teams { nodes { id name key } } }"}
+      extract:
+        teams: "data.teams.nodes"
+
+  push:
+    epic:
+      method: POST
+      path: "/graphql"
+      body: |
+        {
+          "query": "mutation($input: ProjectCreateInput!) { projectCreate(input: $input) { success project { id name } } }",
+          "variables": {
+            "input": {
+              "name": "{{jsonEscape .epic.Title}}",
+              "description": "{{jsonEscape .epic.Description}}",
+              "teamIds": ["{{.project_key}}"]
+            }
+          }
+        }
+      extract:
+        project_id: "data.projectCreate.project.id"
+
+    story:
+      method: POST
+      path: "/graphql"
+      body: |
+        {
+          "query": "mutation($input: IssueCreateInput!) { issueCreate(input: $input) { success issue { id identifier title } } }",
+          "variables": {
+            "input": {
+              "title": "{{jsonEscape .story.Title}}",
+              "description": "{{jsonEscape (printf \"**What:** %s\\n\\n**Why:** %s\" .story.What .story.Why)}}",
+              "teamId": "{{.project_key}}",
+              "projectId": "{{.project_id}}",
+              "estimate": {{.story.Effort}}
+            }
+          }
+        }
+      extract:
+        issue_id: "data.issueCreate.issue.id"
+        issue_key: "data.issueCreate.issue.identifier"

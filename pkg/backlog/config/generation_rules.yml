@@ -1,0 +1,43 @@
+# generation_rules.yml — Backlog generation heuristics
+# Absorbed from skills/wtb-backlog/SKILL.md (Phase 9.1b)
+# Loaded via go:embed in pkg/backlog/
+
+generation_rules:
+  epic:
+    stories_per_epic: { min: 5, max: 8 }
+    required_fields: [id, title, summary, priority]
+    title_rule: "Claro e especifico — ex: 'Backend de Processamento de Telemetria'"
+    must_have:
+      - "Contexto de Negocio (por que este epico existe)"
+      - "Escopo (incluido vs excluido)"
+      - "Dependencias (outros epicos ou sistemas)"
+      - "Riscos (o que pode dar errado)"
+    ordering: "fundacao → features → polish"
+
+  story:
+    template:
+      what: "O que sera feito (verbo no infinitivo, especifico e acionavel)"
+      why: "Por que e necessario (valor de negocio, nao tecnico)"
+      criteria: "Criterios de aceite (testaveis, com numeros quando possivel)"
+    estimation:
+      scale: fibonacci
+      values: [1, 2, 3, 5, 8, 13]
+      guide:
+        1: "Trivial — 1-2 horas (adicionar campo em modelo)"
+        2: "Simples — meio dia (CRUD basico)"
+        3: "Moderado — 1 dia (endpoint com validacao e testes)"
+        5: "Complexo — 2-3 dias (integracao com servico externo)"
+        8: "Muito complexo — 1 semana (cache distribuido)"
+        13: "Muito grande — quebrar em sub-stories"
+    formatting:
+      epics: "## para Epicos"
+      stories: "### para Historias"
+      checkboxes: "[ ] para criterios de aceite"
+
+  anti_patterns:
+    - "Criterio de aceite nao testavel ('deve ser rapida')"
+    - "Story sem valor de negocio claro"
+    - "Epic com mais de 8 stories"
+    - "Titulos genericos ('Implementar Backend')"
+    - "Historia muito grande (>13 pontos)"
+    - "Deep dives especulativos (techs nao mencionadas)"

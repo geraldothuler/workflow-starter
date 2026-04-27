@@ -1,0 +1,121 @@
+heuristics:
+  # Gap de entrega: SF events >> webhook_events para uma frota.
+  # Baseline empírico confirmado (SS-2282, 2026-02-28): ratio ~0.50.
+  # (1 SF event = 1 cruzamento, GeofenceIn e GeofenceOut são linhas separadas,
+  #  cada uma gera 1 webhook — ratio esperado = ~0.50)
+  # Threshold 0.30: calibrado via dados reais — devices com ratio 0.30–0.45
+  # estavam dentro da variação normal. Anomalias confirmadas tinham ratio < 0.30.
+  # context.json: webhook_delivery_ratio_warn — atualizar lá se threshold mudar.
+  - name: webhook_delivery_gap
+    conditions:
+      - field: delivery_ratio
+        op: "<"
+        value: 0.30  # context.json: webhook_delivery_ratio_warn
+    status: warn
+    signal: "webhook delivery abaixo do esperado — {webhooks_count}/{sf_events_count} eventos entregues ({delivery_ratio_pct}% vs baseline ~50%)"
+    actions:
+      - "kubectl logs -n cobli-flink-jobs --context cobli-prod-devices deployment/webhook-builder --since=2h | grep -v StatusLogger | grep -i 'error\\|exception\\|retry'"
+      - "verificar se Flink jobs estão Running: kubectl get pods -n cobli-flink-jobs --context cobli-prod-devices | grep -E 'webhook-builder|webhook-sender'"
+
+  # Drop total: nenhum webhook entregue num período onde SF tem eventos.
+  # Sinal de falha no Flink job ou perda de conexão com ScyllaDB.
+  - name: webhook_delivery_stopped
+    conditions:
+      - field: webhooks_count
+        op: "=="
+        value: 0
+      - field: sf_events_count
+        op: ">"
+        value: 0
+    operator: AND
+    status: critical
+    signal: "entrega de webhooks parou completamente — 0 entregas mas {sf_events_count} eventos no SF para fleet {fleet_id}"
+    actions:
+      - "kubectl get flinkdeployment -n cobli-flink-jobs --context cobli-prod-devices -o jsonpath='{range .items[*]}{.metadata.name}: {.status.jobManagerDeploymentStatus} {.status.jobStatus.state}{\"\\n\"}{end}'"
+      - "kubectl logs -n cobli-flink-jobs --context cobli-prod-devices deployment/webhook-builder --since=1h | grep -v StatusLogger | tail -50"
+      - "verificar ScyllaDB: cqlsh herbie-database.prod.aws.cobli.co -u alexstrasza-stream -p $PASS --execute \"SELECT COUNT(*) FROM herbie.webhook_events WHERE fleet_id={fleet_id} AND event_time >= '{window_start}' ALLOW FILTERING;\""
+
+  # Corte por device: device com SF events mas sem webhook após timestamp T.
+  # Padrão: PB9P — últimos 5 SF events sem webhook correspondente.
+  - name: device_webhook_cutoff
+    conditions:
+      - field: device_missing_streak
+        op: ">="
+        value: 3
+    status: warn
+    signal: "device {device_id} sem webhook nas últimas {device_missing_streak} travessias de geofence (SF registra eventos, ScyllaDB sem entrega)"
+    actions:
+      - "verificar se device está ativo: kubectl exec -n organization --context cobli-prod-devices -- psql -c \"SELECT cobli_id, imei, status FROM device WHERE imei='{device_id}';\""
+      - "checar webhook_signature da frota: SELECT event_types, url FROM herbie.webhook_signature WHERE fleet_id={fleet_id}"
+
+  # Corte escalonado: múltiplos devices parando em datas DIFERENTES dentro da mesma janela.
+  # Assinatura de Kafka consumer group rebalancing (partição assignment instável),
+  # distinto de falha total (todos param juntos) ou falha de device individual.
+  # Detectado empiricamente em SS-2282: 23 devices com cutoffs em 25/02, 26/02 e 27/02.
+  - name: staggered_device_cutoff
+    conditions:
+      - field: devices_with_cutoff_count
+        op: ">="
+        value: 3
+      - field: distinct_cutoff_dates
+        op: ">="
+        value: 2
+    operator: AND
+    status: warn
+    signal: "{devices_with_cutoff_count} devices com corte de webhook em {distinct_cutoff_dates} datas distintas — padrão sugere Kafka consumer group rebalancing, não falha de Flink"
+    actions:
+      - "verificar MSK CloudWatch SumOffsetLag (requer PER_TOPIC_PER_PARTITION monitoring): aws cloudwatch get-metric-statistics --namespace AWS/Kafka --metric-name SumOffsetLag --dimensions Name='Cluster Name',Value=cobli-msk-cluster-prod Name='Consumer Group',Value=webhook-builder"
+      - "verificar K8s events do período: kubectl get events -n cobli-flink-jobs --context cobli-prod-devices --sort-by=.lastTimestamp | grep -i 'webhook-builder\\|evict\\|schedule'"
+
+  # URLs de teste ativas em assinaturas de produção.
+  # Padrão detectado em 2026-03-07: 6 frotas com ngrok efêmero, webhook.site, pipedream, beeceptor.
+  # Estas URLs são efêmeras ou públicas — não confiáveis para produção e geram noise nos logs.
+  # Campo: subscription_url — URL configurada na webhook_signature da frota.
+  - name: test_url_in_production
+    conditions:
+      - field: subscription_url
+        op: "contains_any"
+        value: ["ngrok.io", "ngrok.app", "webhook.site", "pipedream.net", "beeceptor.com", "localhost.com.br", "requestbin"]
+    status: warn
+    signal: "frota {fleet_id} usa URL de teste em produção: {subscription_url} — URL efêmera ou pública, não confiável para entrega real"
+    actions:
+      - "confirmar com Account Management se integração está ativa ou é resíduo de teste"
+      - "se resíduo: DELETE da assinatura no Scylla — cqlsh herbie-database.prod.aws.cobli.co ... DELETE FROM herbie.webhook_signature WHERE fleet_id={fleet_id}"
+      - "se ativa: solicitar ao cliente URL de produção estável"
+
+  # P6 — flux de migração: drop breve pós-cutover esperado.
+  # Distingue drop normal da transição alexstrasza-webhook→webhook-sender
+  # de uma falha real de entrega.
+  # Threshold: se delivery_ratio < 0.30 mas cutover < 4h, é provável flux de transição.
+  # Após 4h sem recuperação: tratar como webhook_delivery_gap real e fazer rollback.
+  # context.json: webhook_delivery_ratio_warn, webhook_migration_flux_grace_hours
+  - name: migration_flux_check
+    conditions:
+      - field: delivery_ratio
+        op: "<"
+        value: 0.30  # context.json: webhook_delivery_ratio_warn
+      - field: migration_age_hours
+        op: "<="
+        value: 4    # context.json: webhook_migration_flux_grace_hours
+    operator: AND
+    status: warn
+    signal: "migration flux — delivery_ratio {delivery_ratio_pct}% abaixo de 30% mas cutover foi há {migration_age_hours}h (normal nas primeiras 4h). Monitorar por 24h antes de declarar OK"
+    actions:
+      - "verificar se webhook-sender recebe eventos da frota: kubectl logs -n cobli-flink-jobs --context cobli-prod-devices -l app=webhook-sender --since=1h | grep {fleet_id}"
+      - "se delivery_ratio ainda < 0.30 após 4h: rollback imediato → PATCH /v1/signatures/:id {\"payloadMapping\": null}"
+
+  # P7 gate — alexstrasza-webhook zerou processamento por 48h.
+  # Pré-condição para deletar o Flink job com segurança (SS-2280).
+  # Campo: alexstrasza_events_last_48h = total de eventos processados no período de 48h.
+  # status: warn = "ação necessária" (salvar spec + executar deleção com aprovação humana).
+  - name: alexstrasza_deprecation_ready
+    conditions:
+      - field: alexstrasza_events_last_48h
+        op: "=="
+        value: 0
+    status: warn
+    signal: "alexstrasza-webhook processou 0 eventos nas últimas 48h — gate P7 atingido (SS-2280)"
+    actions:
+      - "confirmar job status: kubectl get flinkdeployment alexstrasza-webhook -n ecosystem --context cobli-prod-devices -o jsonpath='{.status.jobStatus.state}'"
+      - "salvar spec para rollback: kubectl get flinkdeployment alexstrasza-webhook -n ecosystem --context cobli-prod-devices -o yaml > ~/workflow/drafts/alexstrasza-webhook-spec.yaml"
+      - "deprecar (requer aprovação): kubectl delete flinkdeployment alexstrasza-webhook -n ecosystem --context cobli-prod-devices"

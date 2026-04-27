@@ -1,0 +1,66 @@
+{
+  "host_list": [
+    {
+      "name": "i-abc123.prod.us-east-1",
+      "up": true,
+      "is_muted": false,
+      "apps": ["nginx", "agent", "postgresql"],
+      "meta": {
+        "agent_version": "7.40.0",
+        "platform": "linux",
+        "gohai": {
+          "cpu": {
+            "cpu_cores": "4"
+          },
+          "memory": {
+            "total": "8589934592"
+          }
+        }
+      },
+      "tags_by_source": {
+        "Datadog": ["cloud_provider:aws", "env:production"]
+      }
+    },
+    {
+      "name": "i-def456.prod.us-east-1",
+      "up": true,
+      "is_muted": false,
+      "apps": ["redis", "agent"],
+      "meta": {
+        "agent_version": "7.40.0",
+        "platform": "linux",
+        "gohai": {
+          "cpu": {
+            "cpu_cores": "2"
+          },
+          "memory": {
+            "total": "4294967296"
+          }
+        }
+      },
+      "tags_by_source": {
+        "Datadog": ["cloud_provider:aws", "env:production"]
+      }
+    },
+    {
+      "name": "i-ghi789.staging.us-west-2",
+      "up": false,
+      "is_muted": true,
+      "apps": ["agent"],
+      "meta": {
+        "agent_version": "7.39.0",
+        "platform": "linux",
+        "gohai": {
+          "cpu": {
+            "cpu_cores": "8"
+          },
+          "memory": {
+            "total": "17179869184"
+          }
+        }
+      }
+    }
+  ],
+  "total_matching": 3,
+  "total_returned": 3
+}

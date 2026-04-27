@@ -1,0 +1,32 @@
+{
+  "data": [
+    {
+      "topic_name": "orders",
+      "partitions_count": 12,
+      "replication_factor": 3,
+      "is_internal": false,
+      "cluster_id": "lkc-abc123"
+    },
+    {
+      "topic_name": "payments",
+      "partitions_count": 6,
+      "replication_factor": 3,
+      "is_internal": false,
+      "cluster_id": "lkc-abc123"
+    },
+    {
+      "topic_name": "__consumer_offsets",
+      "partitions_count": 50,
+      "replication_factor": 3,
+      "is_internal": true,
+      "cluster_id": "lkc-abc123"
+    },
+    {
+      "topic_name": "notifications",
+      "partitions_count": 3,
+      "replication_factor": 3,
+      "is_internal": false,
+      "cluster_id": "lkc-abc123"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+heuristics:
+  # Conexões com schedule manual ativo ou inativas — requerem revisão de automação/lifecycle.
+  # schedule_issues = manual_active + inactive_count (campo sintético computado em Go).
+  - name: schedule_issues
+    conditions:
+      - field: schedule_issues
+        op: ">"
+        value: 0
+    status: warn
+    signal: "{schedule_issues} connection(s) need schedule review (manual active or inactive)"
+    actions:
+      - "review manual-schedule and inactive connections"

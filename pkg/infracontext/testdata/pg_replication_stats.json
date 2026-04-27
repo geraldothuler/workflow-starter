@@ -1,0 +1,30 @@
+{
+  "items": [
+    {
+      "pid": 12345,
+      "usename": "replicator",
+      "application_name": "debezium_connector",
+      "client_addr": "10.0.1.50",
+      "state": "streaming",
+      "sent_lsn": "0/F000100",
+      "write_lsn": "0/F000100",
+      "flush_lsn": "0/F000100",
+      "replay_lsn": "0/F000100",
+      "replay_lag_bytes": 0,
+      "sync_state": "async"
+    },
+    {
+      "pid": 12346,
+      "usename": "replicator",
+      "application_name": "standby_replica",
+      "client_addr": "10.0.2.10",
+      "state": "catchup",
+      "sent_lsn": "0/F000100",
+      "write_lsn": "0/E000000",
+      "flush_lsn": "0/E000000",
+      "replay_lsn": "0/D000000",
+      "replay_lag_bytes": 33554432,
+      "sync_state": "async"
+    }
+  ]
+}

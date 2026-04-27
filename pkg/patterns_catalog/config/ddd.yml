@@ -1,0 +1,100 @@
+# ============================================================================
+# DDD — Domain-Driven Design Patterns (5)
+# Source: "Domain-Driven Design: Tackling Complexity in the Heart of Software"
+# Author: Eric Evans (2003)
+# ============================================================================
+
+categories:
+  - id: structural
+    name: "Structural Patterns"
+  - id: data
+    name: "Data Management"
+  - id: migration
+    name: "Migration & Evolution"
+
+patterns:
+
+  - id: bounded-context
+    name: "Bounded Context"
+    type: pattern
+    level: universal
+    category: structural
+    source:
+      reference: "Domain-Driven Design"
+      author: "Eric Evans"
+    description: "Define explicit boundaries within which a domain model applies"
+    when_to_use:
+      - "Large system with multiple teams"
+      - "Same concept has different meanings in different parts of the system"
+    anti_patterns:
+      - "Small system with unified model"
+    related_patterns: ["anti-corruption-layer", "context-map", "aggregate"]
+    keywords: ["boundary", "domain", "model", "team", "ubiquitous language"]
+
+  - id: aggregate
+    name: "Aggregate"
+    type: pattern
+    level: universal
+    category: data
+    source:
+      reference: "Domain-Driven Design"
+      author: "Eric Evans"
+    description: "Cluster of domain objects treated as a single unit for data changes"
+    when_to_use:
+      - "Need transactional consistency for a group of related entities"
+      - "Complex domain with invariants across multiple objects"
+    anti_patterns:
+      - "Simple entities with no inter-dependencies"
+    related_patterns: ["repository", "domain-events", "bounded-context"]
+    keywords: ["root", "entity", "value object", "invariant", "consistency"]
+
+  - id: domain-events
+    name: "Domain Events"
+    type: pattern
+    level: universal
+    category: data
+    source:
+      reference: "Domain-Driven Design"
+      author: "Eric Evans"
+    description: "Communicates state changes within a bounded context as events"
+    when_to_use:
+      - "Multiple parts of the system react to the same state change"
+      - "Decoupling between aggregates or bounded contexts"
+    anti_patterns:
+      - "Simple sequential workflows"
+    related_patterns: ["event-sourcing", "cqrs", "saga"]
+    keywords: ["event", "publish", "subscribe", "notification", "aggregate"]
+
+  - id: anti-corruption-layer
+    name: "Anti-Corruption Layer"
+    type: pattern
+    level: universal
+    category: migration
+    source:
+      reference: "Domain-Driven Design"
+      author: "Eric Evans"
+    description: "Translates between bounded contexts to prevent legacy models from corrupting new models"
+    when_to_use:
+      - "Integrating with legacy system or third-party API with incompatible model"
+      - "During phased migration from old to new system"
+    anti_patterns:
+      - "Both systems share the same domain model"
+    related_patterns: ["strangler-fig", "adapter"]
+    keywords: ["legacy", "translation", "adapter", "bounded context", "third-party"]
+
+  - id: context-map
+    name: "Context Map"
+    type: pattern
+    level: universal
+    category: structural
+    source:
+      reference: "Domain-Driven Design"
+      author: "Eric Evans"
+    description: "Visual representation of relationships between bounded contexts"
+    when_to_use:
+      - "Large system with many bounded contexts"
+      - "Need to understand team dependencies and integration points"
+    anti_patterns:
+      - "Single bounded context"
+    related_patterns: ["bounded-context", "anti-corruption-layer"]
+    keywords: ["map", "relationship", "upstream", "downstream", "conformist"]

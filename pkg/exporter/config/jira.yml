@@ -1,0 +1,90 @@
+# ============================================================================
+# JIRA EXPORTER — HTTP REST
+# ============================================================================
+#
+# Pushes backlog epics and stories to Jira Cloud via REST API v3.
+# Epics are created first, then stories linked to their parent epic.
+#
+# Requires: JIRA_BASE_URL, JIRA_USER_EMAIL, JIRA_API_TOKEN
+# API Docs: https://developer.atlassian.com/cloud/jira/platform/rest/v3/
+#
+# Custom field IDs (e.g., Epic Name) vary by instance.
+# Override: .workflow/exporters/jira.yml
+#
+# ============================================================================
+
+exporter:
+  id: jira
+  name: "Jira"
+  description: "Push backlog to Jira Cloud"
+
+  auth:
+    credentials:
+      - name: "JIRA_BASE_URL"
+        required: true
+        description: "Jira Cloud URL (e.g., https://mycompany.atlassian.net)"
+      - name: "JIRA_USER_EMAIL"
+        required: true
+        description: "Atlassian account email"
+      - name: "JIRA_API_TOKEN"
+        required: true
+        description: "API token (https://id.atlassian.com/manage-profile/security/api-tokens)"
+    resolve_order: ["env", "keyring", "encrypted-file"]
+    setup_guide: |
+      1. Get API token: https://id.atlassian.com/manage-profile/security/api-tokens
+      2. Configure:
+         export JIRA_BASE_URL='https://mycompany.atlassian.net'
+         export JIRA_USER_EMAIL='you@company.com'
+         export JIRA_API_TOKEN='your-api-token'
+
+  transport:
+    type: http
+    base_url: "{{.JIRA_BASE_URL}}/rest/api/3"
+    auth_type: basic
+    auth_value: "{{base64 .JIRA_USER_EMAIL .JIRA_API_TOKEN}}"
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+    timeout: "30s"
+
+  setup:
+    list_projects:
+      method: GET
+      path: "/project/search"
+      extract:
+        projects: "values"
+
+  push:
+    epic:
+      method: POST
+      path: "/issue"
+      body: |
+        {
+          "fields": {
+            "project": {"key": "{{.project_key}}"},
+            "issuetype": {"name": "Epic"},
+            "summary": "{{jsonEscape .epic.Title}}",
+            "description": {{adfText .epic.Description}},
+            "labels": {{jsonArray .epic.Tags}}
+          }
+        }
+      extract:
+        epic_key: "key"
+        epic_id: "id"
+
+    story:
+      method: POST
+      path: "/issue"
+      body: |
+        {
+          "fields": {
+            "project": {"key": "{{.project_key}}"},
+            "issuetype": {"name": "Story"},
+            "summary": "{{jsonEscape .story.Title}}",
+            "description": {{adfText (printf "**What:** %s\n\n**Why:** %s" .story.What .story.Why)}},
+            "parent": {"key": "{{.epic_key}}"},
+            "labels": {{jsonArray .story.Tags}}
+          }
+        }
+      extract:
+        story_key: "key"

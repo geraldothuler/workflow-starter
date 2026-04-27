@@ -1,0 +1,31 @@
+{
+  "data": [
+    {
+      "schema": {
+        "dd-service": "api-gateway",
+        "languages": ["go"],
+        "type": "web",
+        "tier": "Tier 1",
+        "team": "platform"
+      }
+    },
+    {
+      "schema": {
+        "dd-service": "user-service",
+        "languages": ["python", "go"],
+        "type": "web",
+        "tier": "Tier 1",
+        "team": "identity"
+      }
+    },
+    {
+      "schema": {
+        "dd-service": "worker-processor",
+        "languages": ["python"],
+        "type": "background",
+        "tier": "Tier 2",
+        "team": "data"
+      }
+    }
+  ]
+}

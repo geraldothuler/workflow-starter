@@ -1,0 +1,114 @@
+id: test-diagnose
+name: "Test Diagnose — Infra Check + JUnit XML Failure Reporter"
+description: |
+  Verifica se a infra (Docker Compose) está up e saudável antes de rodar testes.
+  Sobe serviços ausentes se necessário. Após falha, classifica o JUnit XML em
+  dois tipos: infra-unavailable (AllNodesFailedException, ConnectionRefused) e
+  test-failure (falha de código real). Reporta apenas as falhas acionáveis.
+
+  Mesmo comportamento do CI: docker compose up --wait -d antes de ./gradlew test.
+
+risk: low
+approval_required: []
+
+vars:
+  local_path: ""    # path local do repositório (ex: ~/Cobliteam/webhook)
+  module: ""        # módulo Gradle (ex: webhook-sender; vazio = todos)
+  services: ""      # serviços Docker Compose (vazio = todos; ex: scylla kafka)
+
+prereqs:
+  - name: docker-runtime
+    description: |
+      Docker daemon precisa estar rodando. Em macOS com Colima:
+        colima status || colima start
+  - name: aws-ecr-auth
+    description: |
+      Se a imagem Scylla for ECR privado (*.dkr.ecr.*.amazonaws.com), autenticar antes do step 2:
+        aws sso login                                          # se token expirado
+        aws ecr get-login-password --region us-east-1 | \
+          docker login --username AWS --password-stdin \
+          911383825788.dkr.ecr.us-east-1.amazonaws.com
+      Verificar com: grep "dkr.ecr" {{.local_path}}/docker-compose.yml
+
+steps:
+  - id: 1
+    tool: |
+      cd {{.local_path}} && \
+      echo "=== Docker Compose status ===" && \
+      docker compose ps --format "table {{"{{"}}  .Service{{"}}"}}\t{{"{{"}} .Status{{"}}"}}\t{{"{{"}} .Health{{"}}"}}" 2>/dev/null && \
+      echo "" && \
+      UNHEALTHY=$(docker compose ps --format json 2>/dev/null \
+        | python3 -c "import sys,json; rows=[json.loads(l) for l in sys.stdin if l.strip()]; \
+          bad=[r['Service'] for r in rows if r.get('Health','') not in ('healthy','') or r.get('State','') != 'running']; \
+          print(' '.join(bad)) if bad else print('all-healthy')" 2>/dev/null \
+        || docker compose ps 2>/dev/null | grep -v "healthy\|Up" | grep -v "^NAME" | awk '{print $1}' | tr '\n' ' ') && \
+      echo "Serviços ausentes/não-saudáveis: ${UNHEALTHY:-nenhum}" && \
+      echo "__unhealthy__:${UNHEALTHY:-nenhum}"
+    purpose: "verificar quais serviços Docker Compose estão up e saudáveis"
+    owner: auto
+
+  - id: 2
+    tool: |
+      cd {{.local_path}} && \
+      echo "Subindo serviços: {{if .services}}{{.services}}{{else}}todos{{end}}" && \
+      docker compose up --wait -d {{.services}} 2>&1 && \
+      echo "" && \
+      echo "=== Status pós-up ===" && \
+      docker compose ps --format "table {{"{{"}} .Service{{"}}"}}\t{{"{{"}} .Status{{"}}"}}\t{{"{{"}} .Health{{"}}"}}" 2>/dev/null
+    purpose: "subir serviços ausentes e aguardar healthchecks (mesmo comportamento do CI)"
+    owner: auto
+    note: "execute apenas se step 1 mostrou serviços unhealthy. Pré-req: aws ecr login se imagem for ECR."
+
+  - id: 3
+    tool: "cd {{.local_path}} && ./gradlew {{if .module}}:{{.module}}:{{end}}test 2>&1; echo \"__exit__:$?\""
+    purpose: "rodar os testes com infra disponível"
+    owner: auto
+
+  - id: 4
+    tool: |
+      cd {{.local_path}} && \
+      RESULTS="{{if .module}}{{.module}}/{{end}}build/test-results" && \
+      echo "=== Sumário por classe ===" && \
+      find "$RESULTS" -name "*.xml" 2>/dev/null | while read f; do
+        CLASS=$(grep -oP '(?<=classname=")[^"]+' "$f" | head -1)
+        TESTS=$(grep -oP '(?<=tests=")[^"]+' "$f" | head -1)
+        FAILS=$(grep -oP '(?<=failures=")[^"]+' "$f" | head -1)
+        ERRS=$(grep -oP '(?<=errors=")[^"]+' "$f" | head -1)
+        [ "${FAILS:-0}" != "0" ] || [ "${ERRS:-0}" != "0" ] && \
+          echo "FAIL  $CLASS  (tests:${TESTS:-?} failures:${FAILS:-0} errors:${ERRS:-0})" || \
+          echo "ok    $CLASS"
+      done | sort && \
+      echo "" && \
+      echo "=== Classificação ===" && \
+      find "$RESULTS" -name "*.xml" -exec grep -l 'failures="[^0]\|errors="[^0]' {} \; 2>/dev/null | while read f; do
+        INFRA=$(grep -c "AllNodesFailedException\|ConnectionRefused\|Connection refused\|NoHostAvailableException\|UnknownError\|cannot connect" "$f" 2>/dev/null || echo 0)
+        CODE=$(grep -c "<failure" "$f" 2>/dev/null || echo 0)
+        echo "$(basename $f): infra-errors=$INFRA code-failures=$CODE"
+      done
+    purpose: "classificar falhas: infra-unavailable vs test-failure (falha de código real)"
+    owner: auto
+    note: "execute apenas se step 3 falhou (exit != 0)"
+
+  - id: 5
+    tool: |
+      cd {{.local_path}} && \
+      RESULTS="{{if .module}}{{.module}}/{{end}}build/test-results" && \
+      echo "=== Falhas de código (acionáveis) ===" && \
+      find "$RESULTS" -name "*.xml" 2>/dev/null | while read f; do
+        IS_INFRA=$(grep -c "AllNodesFailedException\|Connection refused\|NoHostAvailableException" "$f" 2>/dev/null || echo 0)
+        HAS_FAILURE=$(grep -c "<failure" "$f" 2>/dev/null || echo 0)
+        if [ "$HAS_FAILURE" -gt 0 ] && [ "$IS_INFRA" -eq 0 ]; then
+          echo ""
+          echo "=== $(basename $f | sed 's/TEST-//;s/.xml//') ==="
+          grep -A 6 "<failure" "$f" \
+            | sed 's/<[^>]*>//g' \
+            | grep -v '^$' \
+            | head -10
+        fi
+      done && \
+      echo "" && \
+      INFRA_TOTAL=$(find "$RESULTS" -name "*.xml" -exec grep -l "AllNodesFailedException\|Connection refused" {} \; 2>/dev/null | wc -l | tr -d ' ') && \
+      [ "$INFRA_TOTAL" -gt 0 ] && echo "ℹ ${INFRA_TOTAL} arquivo(s) ignorados: falha de infra (Scylla/Kafka não disponível — rodar step 2)" || true
+    purpose: "exibir apenas falhas de código; suprimir ruído de infra"
+    owner: auto
+    note: "execute apenas se step 4 mostrou code-failures > 0"

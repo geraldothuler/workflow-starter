@@ -1,0 +1,22 @@
+heuristics:
+  # P0 open — bloqueia foco imediato, requer ação agora.
+  - name: p0_open
+    conditions:
+      - field: p0_count
+        op: ">"
+        value: 0
+    status: critical
+    signal: "{p0_count} P0 + {p1_count} P1 open issues ({total} total)"
+    actions:
+      - "review P0 issues immediately"
+
+  # P1 open — atenção necessária, não emergencial.
+  - name: p1_open
+    conditions:
+      - field: p1_count
+        op: ">"
+        value: 0
+    status: warn
+    signal: "{p1_count} P1 open issues ({total} total)"
+    actions:
+      - "review P1 issues"

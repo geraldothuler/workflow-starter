@@ -1,0 +1,187 @@
+# ============================================================================
+# Fowler PoEAA — Patterns of Enterprise Application Architecture (10)
+# Source: "Patterns of Enterprise Application Architecture"
+# Author: Martin Fowler (2002)
+# ============================================================================
+
+categories:
+  - id: structural
+    name: "Structural Patterns"
+  - id: scalability
+    name: "Scalability"
+
+patterns:
+
+  - id: repository
+    name: "Repository"
+    type: pattern
+    level: universal
+    category: structural
+    source:
+      reference: "PoEAA"
+      author: "Martin Fowler"
+    description: "Mediates between domain and data mapping layers using a collection-like interface"
+    when_to_use:
+      - "Decouple business logic from data access technology"
+      - "Multiple storage backends or future migration planned"
+      - "Complex queries benefit from encapsulation"
+    anti_patterns:
+      - "Simple scripts or single-use applications"
+      - "ORM already provides sufficient abstraction"
+    related_patterns: ["unit-of-work", "data-mapper"]
+    keywords: ["database", "data access", "persistence", "abstraction", "CRUD", "storage"]
+
+  - id: unit-of-work
+    name: "Unit of Work"
+    type: pattern
+    level: universal
+    category: structural
+    source:
+      reference: "PoEAA"
+      author: "Martin Fowler"
+    description: "Tracks changes to objects during a business transaction and coordinates writing"
+    when_to_use:
+      - "Multiple entities modified in a single business transaction"
+      - "Need to batch database operations for performance"
+    anti_patterns:
+      - "Single entity operations"
+    related_patterns: ["repository"]
+    keywords: ["transaction", "batch", "commit", "rollback", "persistence"]
+
+  - id: data-mapper
+    name: "Data Mapper"
+    type: pattern
+    level: universal
+    category: structural
+    source:
+      reference: "PoEAA"
+      author: "Martin Fowler"
+    description: "A layer that moves data between objects and a database while keeping them independent"
+    when_to_use:
+      - "Domain model and database schema differ significantly"
+      - "Need to keep domain objects ignorant of database"
+    anti_patterns:
+      - "Simple CRUD where Active Record suffices"
+    related_patterns: ["repository", "active-record"]
+    keywords: ["mapping", "ORM", "domain", "schema", "transformation"]
+
+  - id: active-record
+    name: "Active Record"
+    type: pattern
+    level: universal
+    category: structural
+    source:
+      reference: "PoEAA"
+      author: "Martin Fowler"
+    description: "An object that wraps a row in a database table, encapsulating data access and domain logic"
+    when_to_use:
+      - "Simple domain logic closely matching database structure"
+      - "CRUD-heavy applications with straightforward mapping"
+    anti_patterns:
+      - "Complex domain with rich behavior (use Domain Model + Data Mapper)"
+    related_patterns: ["data-mapper", "repository"]
+    keywords: ["ORM", "CRUD", "table", "row", "Rails", "Django"]
+
+  - id: domain-model
+    name: "Domain Model"
+    type: pattern
+    level: universal
+    category: structural
+    source:
+      reference: "PoEAA"
+      author: "Martin Fowler"
+    description: "An object model of the domain that incorporates both behavior and data"
+    when_to_use:
+      - "Complex business logic that benefits from OO modeling"
+      - "Domain rules need to be expressed as code, not procedures"
+    anti_patterns:
+      - "Simple CRUD with no domain logic"
+    related_patterns: ["repository", "service-layer"]
+    keywords: ["domain", "business logic", "entity", "value object", "rich model"]
+
+  - id: service-layer
+    name: "Service Layer"
+    type: pattern
+    level: universal
+    category: structural
+    source:
+      reference: "PoEAA"
+      author: "Martin Fowler"
+    description: "Defines application boundary with a layer of services that coordinates responses"
+    when_to_use:
+      - "Multiple clients access the same business logic"
+      - "Need transaction management and orchestration"
+    anti_patterns:
+      - "Single client with simple domain logic"
+    related_patterns: ["domain-model", "facade"]
+    keywords: ["application service", "orchestration", "transaction", "use case"]
+
+  - id: table-data-gateway
+    name: "Table Data Gateway"
+    type: pattern
+    level: universal
+    category: structural
+    source:
+      reference: "PoEAA"
+      author: "Martin Fowler"
+    description: "An object that acts as gateway to a database table, handling all SQL for that table"
+    when_to_use:
+      - "Centralizing SQL for a table in one place"
+      - "Simple data access without ORM"
+    anti_patterns:
+      - "Complex joins across multiple tables"
+    related_patterns: ["data-mapper", "active-record"]
+    keywords: ["gateway", "table", "SQL", "data access"]
+
+  - id: identity-map
+    name: "Identity Map"
+    type: pattern
+    level: universal
+    category: structural
+    source:
+      reference: "PoEAA"
+      author: "Martin Fowler"
+    description: "Ensures each object gets loaded only once by keeping every loaded object in a map"
+    when_to_use:
+      - "Avoid duplicate objects representing same database row"
+      - "Consistency within a single transaction"
+    anti_patterns:
+      - "Stateless request-response with no object reuse"
+    related_patterns: ["unit-of-work"]
+    keywords: ["cache", "identity", "dedup", "session", "first-level cache"]
+
+  - id: lazy-load
+    name: "Lazy Load"
+    type: pattern
+    level: universal
+    category: scalability
+    source:
+      reference: "PoEAA"
+      author: "Martin Fowler"
+    description: "Defer initialization of an object until it is needed"
+    when_to_use:
+      - "Loading all related data upfront is expensive"
+      - "Related data is only needed in some code paths"
+    anti_patterns:
+      - "Always need the data (eager loading is simpler)"
+      - "N+1 query problem risk"
+    related_patterns: ["proxy", "identity-map"]
+    keywords: ["deferred", "on-demand", "virtual proxy", "performance"]
+
+  - id: service-locator
+    name: "Service Locator"
+    type: pattern
+    level: universal
+    category: structural
+    source:
+      reference: "PoEAA"
+      author: "Martin Fowler"
+    description: "Central registry that provides service implementations on demand"
+    when_to_use:
+      - "Framework code that cannot use constructor injection"
+      - "Plugin systems with dynamic service discovery"
+    anti_patterns:
+      - "When dependency injection is available (prefer DI)"
+      - "Hides dependencies, making testing harder"
+    related_patterns: ["factory-method", "abstract-factory"]
+    keywords: ["registry", "lookup", "service", "discovery", "container"]

@@ -1,0 +1,239 @@
+# Common words to filter in Layer 4 (isolated extraction)
+# These capitalized words are NOT technologies
+# Override: .workflow/deep-dives/common_words.yml
+
+# Portuguese infinitive verbs
+verbs_pt_infinitive:
+  - Criar
+  - Usar
+  - Implementar
+  - Configurar
+  - Retornar
+  - Integrar
+  - Processar
+  - Validar
+  - Gerar
+  - Executar
+  - Gerenciar
+  - Monitorar
+  - Salvar
+  - Carregar
+  - Enviar
+  - Buscar
+  - Listar
+  - Publicar
+  - Atualizar
+  - Adicionar
+  - Remover
+  - Construir
+  - Armazenar
+  - Exibir
+  - Conectar
+
+# Portuguese 3rd person conjugations
+verbs_pt_conjugated:
+  - Retorna
+  - Integra
+  - Processa
+  - Valida
+  - Executa
+  - Monitora
+  - Gerencia
+  - Armazena
+  - Conecta
+  - Publica
+  - Consome
+
+# English verbs
+verbs_en:
+  - Create
+  - Use
+  - Build
+  - Make
+  - Return
+  - Send
+  - Load
+  - Save
+  - Search
+  - Handle
+  - Deploy
+  - Manage
+  - Store
+  - Display
+  - Process
+  - Generate
+  - Execute
+  - Connect
+  - Validate
+  - Monitor
+
+# Portuguese common nouns
+nouns_pt:
+  - Produtos
+  - Pedidos
+  - "Usu\xE1rios"
+  - Sistema
+  - Tela
+  - Login
+  - Dados
+  - Projeto
+  - "Aplica\xE7\xE3o"
+  - Clientes
+  - Eventos
+  - "Servi\xE7o"
+  - "Formul\xE1rio"
+  - Tabela
+  - "Relat\xF3rio"
+  - Cadastro
+  - Consulta
+  - Registro
+
+# English common nouns
+nouns_en:
+  - Products
+  - Orders
+  - Users
+  - System
+  - Screen
+  - Service
+  - Items
+  - Table
+  - Report
+  - Form
+  - Page
+  - View
+
+# DB/Design terms that look like technologies
+design_terms:
+  - Schema
+  - Model
+  - Index
+  - Column
+  - Migration
+  - Seed
+  - Query
+  - Record
+  - Entity
+  - Field
+  - Module
+  - Component
+  - Config
+  - Setting
+  - Option
+  - Plugin
+  - Template
+  - Layout
+  - Theme
+  - Widget
+  - Adapter
+  - Architecture
+  - Arquitetura
+  - Pattern
+  - Framework
+  - Library
+  - Biblioteca
+  - Tool
+  - Ferramenta
+  - Package
+  - Pacote
+  - Dependency
+  - "Depend\xEAncia"
+
+# Generic programming terms
+generic:
+  - Data
+  - Info
+  - Null
+  - None
+  - "True"
+  - "False"
+  - Error
+  - Warning
+  - Success
+  - Status
+  - Type
+  - Name
+  - Value
+  - Result
+  - Response
+  - Request
+  - Input
+  - Output
+
+# Business terms (Portuguese) - prevent false positives
+business_pt:
+  - Pagamento
+  - Fatura
+  - Cupom
+  - Desconto
+  - Carrinho
+  - Estoque
+  - Entrega
+  - Rastreamento
+  - "Notifica\xE7\xE3o"
+  - Alerta
+  - Mensagem
+  - Tarefa
+  - Agenda
+  - "Reuni\xE3o"
+  - Equipe
+  - Empresa
+  - Parceiro
+  - Fornecedor
+  - Categoria
+  - Subcategoria
+  - Filtro
+  - "Configura\xE7\xE3o"
+  - "Relat\xF3rio"
+  - Dashboard
+  - Painel
+  - Perfil
+  - Conta
+  - Assinatura
+  - Plano
+  - "Ordena\xE7\xE3o"
+  - "Pagina\xE7\xE3o"
+  - "Coment\xE1rio"
+
+# Business terms (English) - prevent false positives
+business_en:
+  - Payment
+  - Invoice
+  - Coupon
+  - Discount
+  - Cart
+  - Stock
+  - Delivery
+  - Tracking
+  - Notification
+  - Alert
+  - Message
+  - Task
+  - Schedule
+  - Meeting
+  - Team
+  - Company
+  - Partner
+  - Supplier
+  - Category
+  - Filter
+  - Comment
+
+# Generic infrastructure terms
+infra_generic:
+  - Container
+  - Image
+  - Volume
+  - Network
+  - Port
+  - Porta
+  - Host
+  - Cluster
+  - Node
+  - Pod
+  - Namespace
+  - Registry
+  - Log
+  - Metric
+  - Trace
+  - Span

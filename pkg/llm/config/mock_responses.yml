@@ -1,0 +1,213 @@
+# Mock LLM responses for dev feedback loop
+# Uso: wtb run backlog --provider mock
+#
+# Router usa keywords do prompt para selecionar a resposta correta:
+#   extraction  → prompt contém "TRANSCRIÇÃO"
+#   epics       → prompt contém "complexity" (campo do formato de épicos)
+#   stories     → prompt contém "Como engenheiro, quero" (exemplo de história)
+#   criteria    → prompt contém "Critério 1 com métrica" (exemplo de critério)
+#   technologies → prompt contém "Use nomes canônicos"
+#   deep_dive   → prompt contém "why_in_this_story"
+
+responses:
+  extraction: |
+    {
+      "context": "Sistema de rastreamento de frotas com processamento de eventos IoT em tempo real. Veículos enviam telemetria via MQTT a ~1000 eventos/segundo. Backend processa, persiste e disponibiliza via REST API para clientes e integrações.",
+      "problem": "O monólito atual não suporta picos de ingestão acima de 500 eventos/s. Latência P95 acima de 2s em horário de pico. Necessidade de separar domínios de ingestão, processamento e consulta.",
+      "objectives": [
+        "Suportar 5000 eventos/s com latência P95 < 300ms",
+        "Separar ingestão de consulta para escala independente",
+        "Manter SLA de 99.9% de uptime"
+      ],
+      "volumetry": {
+        "events_per_second": "5000",
+        "events_per_second_confidence": "0.9",
+        "vehicles": "200000",
+        "vehicles_confidence": "0.85",
+        "api_requests_per_day": "10000000",
+        "api_requests_per_day_confidence": "0.7"
+      },
+      "stack": [
+        {"name": "Kafka", "confidence": 0.95, "source": "explicit"},
+        {"name": "PostgreSQL", "confidence": 0.9, "source": "explicit"},
+        {"name": "Go", "confidence": 0.9, "source": "explicit"},
+        {"name": "Kubernetes", "confidence": 0.85, "source": "explicit"},
+        {"name": "Redis", "confidence": 0.75, "source": "inferred", "rationale": "Cache de sessão e rate limiting — padrão para APIs de alta frequência"}
+      ],
+      "nfrs": [
+        "Latência P95 < 300ms para ingestão",
+        "Uptime 99.9%",
+        "Horizontal scalability via Kubernetes HPA",
+        "Zero data loss em falhas de componentes"
+      ],
+      "overall_confidence": 0.87,
+      "section_confidence": {
+        "context": 0.92, "problem": 0.95, "objectives": 0.88,
+        "volumetry": 0.82, "stack": 0.90, "nfrs": 0.85
+      },
+      "speakers": ["Tech Lead", "Product Manager", "SRE"],
+      "warnings": [
+        "Redis não mencionado explicitamente — inferido por padrão de API de alta frequência",
+        "Volume de 200K veículos estimado com base no contexto B2B"
+      ],
+      "explicit_mentions": [
+        {"type": "tech", "value": "Kafka", "speaker": "Tech Lead"},
+        {"type": "tech", "value": "PostgreSQL", "speaker": "Tech Lead"},
+        {"type": "tech", "value": "Go", "speaker": "Tech Lead"}
+      ],
+      "inferred_items": [
+        {"type": "tech", "value": "Redis", "confidence": 0.75, "rationale": "Rate limiting + session cache — padrão IoT"}
+      ]
+    }
+
+  epics: |
+    [
+      {
+        "id": "E1",
+        "title": "Pipeline de Ingestão de Eventos",
+        "description": "Separar ingestão MQTT/Kafka do processamento. Garantir throughput de 5000 eventos/s com backpressure controlado.",
+        "tags": ["backend", "kafka", "ingestão"],
+        "priority": "high",
+        "complexity": 9
+      },
+      {
+        "id": "E2",
+        "title": "API de Consulta e Telemetria",
+        "description": "REST API para consulta de posição, histórico e métricas de frota. Separada da ingestão para escala independente.",
+        "tags": ["backend", "api", "postgresql"],
+        "priority": "high",
+        "complexity": 7
+      },
+      {
+        "id": "E3",
+        "title": "Observabilidade e SRE",
+        "description": "Instrumentação com métricas, traces e alertas. Runbooks para on-call. SLOs definidos e monitorados.",
+        "tags": ["sre", "observabilidade", "kubernetes"],
+        "priority": "medium",
+        "complexity": 6
+      }
+    ]
+
+  stories: |
+    [
+      {
+        "id": "E1.1",
+        "title": "Consumer Kafka com backpressure",
+        "what": "Como engenheiro, quero um consumer Kafka com controle de backpressure para processar eventos sem perda em picos",
+        "why": "Garantir que picos acima do processamento atual não causem perda de dados ou degradação em cascata",
+        "effort": 8,
+        "acceptance_criteria": [
+          "Consumer processa 5000 eventos/s em teste de carga de 10min",
+          "Backpressure ativado automaticamente quando lag > 10000 mensagens",
+          "Zero mensagens perdidas em falha e restart do pod"
+        ],
+        "tags": ["kafka", "backend", "reliability"]
+      },
+      {
+        "id": "E1.2",
+        "title": "Schema registry e validação de payload",
+        "what": "Como SRE, quero validação de schema nos eventos de entrada para rejeitar payloads malformados antes de persistir",
+        "why": "Payloads inválidos causam falhas silenciosas no processamento downstream e corrompem métricas",
+        "effort": 5,
+        "acceptance_criteria": [
+          "Eventos com schema inválido retornam erro 422 e são logados",
+          "Schema versionado no Confluent Schema Registry",
+          "Zero impacto em latência P95 (< 5ms overhead)"
+        ],
+        "tags": ["kafka", "validação", "schema"]
+      },
+      {
+        "id": "E1.3",
+        "title": "Dead letter queue para eventos com falha",
+        "what": "Como engenheiro, quero DLQ para eventos que falham após 3 retries para análise posterior sem bloquear o pipeline",
+        "why": "Eventos problemáticos bloqueiam o consumer e degradam o throughput do pipeline inteiro",
+        "effort": 3,
+        "acceptance_criteria": [
+          "Eventos com 3 falhas consecutivas movidos para DLQ automaticamente",
+          "DLQ monitorado com alerta quando profundidade > 100",
+          "Endpoint de replay manual para reprocessar DLQ"
+        ],
+        "tags": ["kafka", "reliability", "dlq"]
+      }
+    ]
+
+  criteria: |
+    [
+      "Implementação completa com cobertura de testes > 80%",
+      "Latência P95 dentro do SLA definido na história",
+      "Code review aprovado por pelo menos 1 engenheiro sênior",
+      "Documentação atualizada (README ou runbook se aplicável)",
+      "Deploy em staging sem regressão nos testes de integração"
+    ]
+
+  technologies: |
+    {
+      "technologies": ["Kafka", "PostgreSQL", "Go", "Kubernetes", "Redis"]
+    }
+
+  heuristic_analysis: |
+    {
+      "patterns": [
+        {
+          "probe": "db-health",
+          "observation": "3 execuções consecutivas com WAL crescente (400→450→503 MB) nas últimas 6h — degradação linear",
+          "confidence": 0.92
+        },
+        {
+          "probe": "airbyte",
+          "observation": "Duração média de sync aumentou 40% nos últimos 5 ciclos — latência crescente",
+          "confidence": 0.78
+        },
+        {
+          "probe": "kafka-status",
+          "observation": "Consumer lag oscila entre 8000 e 12000 mensagens em horário de pico (08h–10h)",
+          "confidence": 0.85
+        }
+      ],
+      "suggested_rules": [
+        {
+          "probe": "db-health",
+          "window": 3,
+          "consecutive_status": "warn",
+          "escalate_to": "critical",
+          "signal": "db-health: {n} execuções consecutivas em warn → WAL crescente, avaliar VACUUM ou conexões ociosas",
+          "rationale": "Padrão: WAL cresce ~50 MB por execução warn consecutiva — sem intervenção vira critical em 1–2h"
+        },
+        {
+          "probe": "airbyte",
+          "window": 4,
+          "consecutive_status": "warn",
+          "escalate_to": "warn",
+          "signal": "airbyte: {n} syncs lentos consecutivos → revisar schedule ou warehouse sizing",
+          "rationale": "Duração acima de threshold por 4 ciclos indica degradação estrutural, não pico pontual"
+        },
+        {
+          "probe": "kafka-status",
+          "window": 2,
+          "consecutive_status": "critical",
+          "escalate_to": "critical",
+          "signal": "kafka-status: {n} execuções críticas consecutivas → lag acima de 10000, risco de backpressure em cascata",
+          "rationale": "Lag crítico por 2 execuções = consumer não está drenando — escalar imediatamente"
+        }
+      ],
+      "confidence": 0.86,
+      "data_points": 47,
+      "time_range": "24h"
+    }
+
+  deep_dive: |
+    {
+      "term": "Kafka",
+      "what_is": "Plataforma de streaming distribuído baseada em log append-only com retenção configurável. Garantias de ordenação por partição, at-least-once delivery por padrão.",
+      "what_in_this_story": "Broker central do pipeline de ingestão. Recebe eventos IoT dos veículos, bufferiza picos e distribui para consumers de processamento.",
+      "why_here": "Volume de 5000 eventos/s com necessidade de desacoplamento entre ingestão e processamento — Kafka é o padrão para este padrão de workload.",
+      "why_in_this_story": "Permite que picos de ingestão não impactem o processamento downstream via backpressure natural do consumer lag.",
+      "configuration": "3 brokers (cobli-prod), retention 7 dias, replication factor 3, min.insync.replicas 2. Topic: device-events, partitions: 24.",
+      "patterns": ["Event-driven architecture", "CQRS — separação de write (ingestão) e read (consulta)", "Dead Letter Queue para eventos com falha"],
+      "source_patterns": ["GP-001", "TP-003"],
+      "decisions": [
+        "Kafka escolhido sobre RabbitMQ por throughput e retention nativa",
+        "24 partições = paralelismo máximo de 24 consumers simultâneos",
+        "Replication factor 3 para tolerar falha de 1 broker sem perda de dados"
+      ]
+    }

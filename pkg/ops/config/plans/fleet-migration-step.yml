@@ -1,0 +1,48 @@
+id: fleet-migration-step
+name: "Fleet Migration Step (Legacy to New System)"
+description: "Migrate one fleet from legacy allowlist to new system blocklist. Recovery: re-add UUID to both repos."
+risk: medium
+approval_required: [3, 4, 6]
+
+vars:
+  aws_profile: ""
+  kubectl_context: ""
+  namespace: ""
+  fleet_id: ""
+  deployment: ""
+  legacy_deployment: ""
+
+steps:
+  - id: 1
+    tool: "wtb ops auth --profile {{.aws_profile}}"
+    purpose: "verificar token AWS SSO"
+    owner: auto
+
+  - id: 2
+    tool: "wtb ops k8s status --context {{.kubectl_context}} --namespace {{.namespace}} --deployment {{.deployment}} && wtb ops k8s status --context {{.kubectl_context}} --namespace {{.namespace}} --deployment {{.legacy_deployment}}"
+    purpose: "pre-flight: confirmar que novo sistema e legado estao saudaveis"
+    owner: auto
+    abort_if: "data.not_ready > 0"
+
+  - id: 3
+    tool: "# Remover fleet {{.fleet_id}} do allowlist do {{.legacy_deployment}} — aplicar config e redeploy"
+    purpose: "remover fleet do legado — apos este passo, alexstrasza para de processar este fleet"
+    owner: human
+    rollback: "# Re-adicionar fleet {{.fleet_id}} ao allowlist do {{.legacy_deployment}} — reverter config"
+
+  - id: 4
+    tool: "# Remover fleet {{.fleet_id}} do blocklist do {{.deployment}} — aplicar config e redeploy"
+    purpose: "habilitar fleet no novo sistema — apos este passo, webhook-sender assume"
+    owner: human
+    rollback: "# Re-adicionar fleet {{.fleet_id}} ao blocklist do {{.deployment}} — reverter config"
+
+  - id: 5
+    tool: "wtb ops k8s status --context {{.kubectl_context}} --namespace {{.namespace}} --deployment {{.deployment}} && wtb ops k8s status --context {{.kubectl_context}} --namespace {{.namespace}} --deployment {{.legacy_deployment}}"
+    purpose: "confirmar que ambos os sistemas permanecem saudaveis apos mudanca de config"
+    owner: auto
+
+  - id: 6
+    tool: "# Enviar evento de teste para fleet {{.fleet_id}} e confirmar entrega via novo sistema — verificar logs do {{.deployment}}"
+    purpose: "validacao funcional: Enter para confirmar migracao do fleet, Ctrl+C para abortar"
+    owner: human
+    rollback: "# Re-adicionar fleet {{.fleet_id}} ao allowlist do {{.legacy_deployment}} E ao blocklist do {{.deployment}} — reverter para legado"

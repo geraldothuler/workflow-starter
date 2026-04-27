@@ -1,0 +1,31 @@
+{
+  "data": [
+    {
+      "consumer_group_id": "order-processor",
+      "state": "STABLE",
+      "is_simple": false,
+      "cluster_id": "lkc-abc123",
+      "coordinator": {
+        "related": "https://pkc-abc123.us-east-1.aws.confluent.cloud:443/kafka/v3/clusters/lkc-abc123/brokers/0"
+      }
+    },
+    {
+      "consumer_group_id": "payment-handler",
+      "state": "REBALANCING",
+      "is_simple": false,
+      "cluster_id": "lkc-abc123",
+      "coordinator": {
+        "related": "https://pkc-abc123.us-east-1.aws.confluent.cloud:443/kafka/v3/clusters/lkc-abc123/brokers/1"
+      }
+    },
+    {
+      "consumer_group_id": "dead-letter-consumer",
+      "state": "DEAD",
+      "is_simple": false,
+      "cluster_id": "lkc-abc123",
+      "coordinator": {
+        "related": "https://pkc-abc123.us-east-1.aws.confluent.cloud:443/kafka/v3/clusters/lkc-abc123/brokers/2"
+      }
+    }
+  ]
+}

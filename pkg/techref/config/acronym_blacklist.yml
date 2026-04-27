@@ -1,0 +1,68 @@
+# Acronyms to exclude from Layer 2 extraction
+# These uppercase words are NOT technologies
+# Override: .workflow/deep-dives/acronym_blacklist.yml
+
+blacklist:
+  # English verbs/words (2-3 letters)
+  - GO    # verb, not Go language (Go detected by Layer 1)
+  - DO
+  - IF
+  - IT
+  - IS
+  - BE
+  - WE
+  - HE
+  - SO
+  - UP
+  - BY
+  - OR
+  - NO
+  - TO
+  - FOR
+  - SET
+  - GET
+  - APP   # too generic
+  - NEW
+  - OLD
+  - CAT   # catalog
+  - THE
+  - AND
+  - NOT
+  - BUT
+  - ALL
+  - ANY
+  - HAS
+  - WAS
+  - ARE
+  - CAN
+  - MAY
+  - RUN
+  - USE
+  - ADD
+  - PUT
+  - END
+
+  # Architecture & documentation patterns (not technologies)
+  - ADR   # Architecture Decision Record
+  - RFC   # Request for Comments
+  - SLA   # Service Level Agreement
+  - SLO   # Service Level Objective
+  - SLI   # Service Level Indicator
+  - KPI   # Key Performance Indicator
+  - OKR   # Objectives and Key Results
+
+  # Generic concepts (specific implementations are in known_technologies)
+  - TTL   # Time To Live (config parameter)
+  - RPC   # Remote Procedure Call (gRPC is a known tech)
+  - DSL   # Domain Specific Language
+  - IDL   # Interface Definition Language
+  - ORM   # Object-Relational Mapping (Hibernate/GORM are known techs)
+  - SDK   # Software Development Kit
+  - CLI   # Command Line Interface
+  - IDE   # Integrated Development Environment
+  - ACL   # Access Control List
+  - DNS   # Domain Name System
+  - CDN   # Content Delivery Network (CloudFront is a known tech)
+  - ETL   # Extract Transform Load
+  - ELT   # Extract Load Transform
+  - API   # filtered as trivial too

@@ -1,0 +1,54 @@
+heuristics:
+  # Checkpoint interval muito agressivo sem unaligned checkpoints habilitado.
+  # Risco confirmado (discovery 030, 2026-03-09): interval=500ms + unaligned=false
+  # gerou spike de duração de 25s → backpressure → queda de throughput.
+  # Safe default: interval >= 5000ms OU unaligned_checkpoints=true.
+  # context.json: flink_checkpoint_interval_risky_ms, flink_checkpoint_interval_safe_ms
+  - name: flink_aggressive_checkpoint_interval
+    conditions:
+      - field: checkpoint_interval_ms
+        op: "<"
+        value: 2000  # context.json: flink_checkpoint_interval_risky_ms
+      - field: unaligned_checkpoints_enabled
+        op: "=="
+        value: false
+    operator: AND
+    status: warn
+    signal: "checkpoint interval muito agressivo ({checkpoint_interval_ms}ms) sem unaligned checkpoints — risco de cascata de backpressure. Safe default: >=5000ms ou habilitar unaligned_checkpoints=true"
+    actions:
+      - "verificar duração dos últimos checkpoints via Flink REST: kubectl port-forward -n cobli-flink-jobs --context cobli-prod-devices <jm-pod> 8081:8081 && curl -s http://localhost:8081/jobs/{job_id}/checkpoints | python3 -c \"import json,sys; d=json.load(sys.stdin); [print(c['latest']['completed']['duration']) for c in [d] if c.get('latest',{}).get('completed')]\""
+      - "se duração > 5000ms com frequência: aumentar interval para 5000ms no helm prod.yaml"
+      - "alternativa: habilitar unaligned_checkpoints=true elimina backpressure por alignment"
+
+  # Parallelism mismatch: spec.job.parallelism no helm não bate com FLINK_PARALLELISM env var.
+  # Causa raiz confirmada (MEMORY.md): application.conf hardcoda parallelism=1;
+  # StreamExecutionEnvironmentExtensions.kt sobrescreve via FLINK_PARALLELISM env var.
+  # Se helm tem parallelism=4 mas env var está ausente ou com valor diferente,
+  # job sobe com paralelismo errado → todos os device_ids no mesmo slot → UEP satura.
+  - name: flink_parallelism_mismatch
+    conditions:
+      - field: helm_job_parallelism
+        op: "!="
+        value: "{flink_parallelism_env_var}"
+    status: critical
+    signal: "mismatch de paralelismo — helm spec.job.parallelism={helm_job_parallelism} mas FLINK_PARALLELISM env var={flink_parallelism_env_var}. Job sobe com p={flink_parallelism_env_var} → UEP pode saturar"
+    actions:
+      - "verificar env var atual: kubectl get deployment webhook-builder -n cobli-flink-jobs --context cobli-prod-devices -o jsonpath='{.spec.template.spec.containers[0].env}' | python3 -m json.tool | grep -A2 FLINK_PARALLELISM"
+      - "verificar spec.job.parallelism atual: kubectl get flinkdeployment webhook-builder -n cobli-flink-jobs --context cobli-prod-devices -o jsonpath='{.spec.job.parallelism}'"
+      - "corrigir: ambos devem ter o mesmo valor N. Patch via kubectl ou helm upgrade com --set 'alex-job-chart.jobParallelism=N'"
+      - "ATENÇÃO: FLINK_PARALLELISM está em env[17] (após COBLERNETES_HOST_IP em env[0]). Verificar índice antes de patch direto"
+
+  # TM idle: número de TaskManagers maior que o esperado para o paralelismo configurado.
+  # Fórmula: TMs esperados = parallelism.default / taskmanager.numberOfTaskSlots
+  # TMs excedentes acumulam JVM heap sem processar dados.
+  - name: flink_excess_taskmanagers
+    conditions:
+      - field: running_tm_count
+        op: ">"
+        value: "{expected_tm_count}"
+    status: warn
+    signal: "{running_tm_count} TMs running mas esperado {expected_tm_count} (parallelism={parallelism} / slots_per_tm={slots_per_tm}) — TMs ociosos acumulam heap"
+    actions:
+      - "verificar configuração: kubectl get flinkdeployment webhook-builder -n cobli-flink-jobs --context cobli-prod-devices -o jsonpath='{.spec.flinkConfiguration}'"
+      - "helm prod.yaml: garantir que parallelism.default = paralelismo real do job (via FLINK_PARALLELISM)"
+      - "divergência cria TMs ociosos que pressionam memória sem contribuir com throughput"

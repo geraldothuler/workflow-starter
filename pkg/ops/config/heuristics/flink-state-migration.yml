@@ -1,0 +1,65 @@
+heuristics:
+  # JM em CrashLoopBackOff após deploy com mudança de tipo de state.
+  # Padrão: RecoveryFailureException — operador não consegue tirar savepoint
+  # porque JM já está caído, fica em ERROR RECONCILING.
+  # Detectado em webhook-builder 2026-03-08: BroadcastState → ValueState.
+  # SOLUÇÃO: helm uninstall + install (não helm upgrade, não allowNonRestoredState).
+  - name: flink_jm_crash_loop_after_deploy
+    conditions:
+      - field: jm_restart_count
+        op: ">="
+        value: 3
+      - field: operator_status
+        op: "=="
+        value: "ERROR"
+    operator: AND
+    status: critical
+    signal: "JM em CrashLoopBackOff ({jm_restart_count} restarts) + operador ERROR — provável incompatibilidade de state schema. Helm uninstall+install necessário."
+    actions:
+      - "verificar erro do operador: kubectl get flinkdeployment {job} -n cobli-flink-jobs --context cobli-prod-devices -o yaml | grep -A5 '\"error\"'"
+      - "se RecoveryFailureException ou state incompatibility: helm uninstall {job} -n cobli-flink-jobs --kube-context cobli-prod-devices"
+      - "aguardar pods sumirem (15s) e reinstalar: helm install {job} ./chart -n cobli-flink-jobs --kube-context cobli-prod-devices -f prod.yaml --set 'alex-job-chart.jobImageVersion=<SHA>'"
+      - "NÃO usar helm upgrade — operador precisa de JM ativo para tirar savepoint"
+      - "NÃO usar allowNonRestoredState — só resolve operadores removidos, não mudança de tipo"
+
+  # Operador em RECONCILING mas JM ainda não subiu após 5+ min.
+  # Pode indicar que o operador está aguardando JM para tirar savepoint (deploy normal)
+  # ou que o JM está crashando antes de expor a porta REST (startup probe failing).
+  - name: flink_operator_reconciling_stuck
+    conditions:
+      - field: operator_status
+        op: "=="
+        value: "RECONCILING"
+      - field: jm_ready
+        op: "=="
+        value: false
+      - field: reconciling_age_minutes
+        op: ">="
+        value: 5
+    operator: AND
+    status: warn
+    signal: "Operador em RECONCILING há {reconciling_age_minutes}min com JM não-ready — verificar se JM está em CrashLoopBackOff"
+    actions:
+      - "kubectl get pods -n cobli-flink-jobs --context cobli-prod-devices | grep {job}"
+      - "kubectl describe pod -n cobli-flink-jobs --context cobli-prod-devices <jm-pod> | tail -20"
+      - "kubectl logs -n cobli-flink-jobs --context cobli-prod-devices <jm-pod> --previous | grep -v StatusLogger | tail -50"
+
+  # allowNonRestoredState: true não é suficiente para mudança de tipo de state.
+  # Heurística de detecção: job com allowNonRestoredState=true ainda crashando.
+  # Padrão: "Cannot restore job from savepoint ... Cannot map checkpoint/savepoint state"
+  # ou "StateMigrationException".
+  - name: flink_allow_non_restored_insufficient
+    conditions:
+      - field: allow_non_restored_state
+        op: "=="
+        value: true
+      - field: jm_restart_count
+        op: ">="
+        value: 2
+    operator: AND
+    status: critical
+    signal: "allowNonRestoredState=true definido mas JM ainda crashando ({jm_restart_count} restarts) — mudança de tipo de state requer helm uninstall+install"
+    actions:
+      - "checar se é StateMigrationException ou schema incompatibility no log do JM"
+      - "helm uninstall {job} -n cobli-flink-jobs --kube-context cobli-prod-devices"
+      - "helm install {job} ./chart -n cobli-flink-jobs --kube-context cobli-prod-devices -f prod.yaml --set 'alex-job-chart.jobImageVersion=<SHA>'"

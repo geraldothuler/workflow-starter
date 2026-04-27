@@ -1,0 +1,275 @@
+# Trivial terms - do not generate deep dives
+# Override: .workflow/deep-dives/trivial_terms.yml
+
+protocols:
+  - HTTP
+  - HTTPS
+  - TCP
+  - UDP
+  - IP
+  - FTP
+  - SMTP
+  - WebSocket
+  - SSH
+  - TLS
+  - SSL
+
+formats:
+  - JSON
+  - XML
+  - CSV
+  - YAML
+  - YML
+  - TOML
+  - Markdown
+  - HTML
+  - Plain Text
+
+http_methods:
+  - GET
+  - POST
+  - PUT
+  - DELETE
+  - PATCH
+  - HEAD
+  - OPTIONS
+  - TRACE
+
+basic_concepts:
+  - API
+  - REST
+  - RESTful
+  - CRUD
+  - endpoint
+  - rota
+  - controller
+  - service
+  - repository
+  - model
+  - DTO
+  - VO
+  - POJO
+  - request
+  - response
+  - client
+  - server
+  - frontend
+  - backend
+  - full-stack
+
+data_structures:
+  - array
+  - list
+  - lista
+  - ArrayList
+  - map
+  - HashMap
+  - dictionary
+  - "dicion\xE1rio"
+  - set
+  - HashSet
+  - queue
+  - fila
+  - stack
+  - pilha
+  - tree
+  - graph
+  - "\xE1rvore"
+  - string
+  - int
+  - boolean
+  - float
+  - objeto
+  - object
+  - class
+  - classe
+
+basic_auth:
+  - login
+  - logout
+  - signin
+  - signout
+  - authentication
+  - "autentica\xE7\xE3o"
+  - authorization
+  - "autoriza\xE7\xE3o"
+  - token
+  - session
+  - "sess\xE3o"
+  - cookie
+  - password
+  - senha
+  - username
+  - email
+
+generic_db:
+  - database
+  - banco de dados
+  - DB
+  - table
+  - tabela
+  - row
+  - linha
+  - column
+  - coluna
+  - index
+  - "\xEDndice"
+  - query
+  - consulta
+  - SQL
+  - SELECT
+  - INSERT
+  - UPDATE
+  - WHERE
+  - JOIN
+  - GROUP BY
+  - ORDER BY
+
+basic_frontend:
+  - CSS
+  - stylesheet
+  - estilo
+  - JavaScript
+  - JS
+  - DOM
+  - button
+  - "bot\xE3o"
+  - input
+  - form
+  - "formul\xE1rio"
+  - div
+  - span
+  - link
+
+platforms:
+  - iOS
+  - Android
+  - Windows
+  - Linux
+  - macOS
+  - Web
+  - Mobile
+  - Desktop
+
+common_abbrev:
+  - UI
+  - UX
+  - URL
+  - URI
+  - UUID
+  - ID
+  - PK
+  - FK
+  - DAO
+
+# Very basic terms (always trivial)
+very_basic:
+  - api
+  - endpoint
+  - rota
+  - route
+  - request
+  - response
+  - req
+  - res
+  - data
+  - dados
+  - info
+  - "informa\xE7\xE3o"
+  - file
+  - arquivo
+  - upload
+  - download
+
+devops_concepts:
+  - CI
+  - CD
+  - pipeline
+  - deploy
+  - deployment
+  - staging
+  - production
+  - environment
+  - ambiente
+  - build
+  - release
+  - rollback
+  - hotfix
+  - branch
+  - merge
+  - commit
+  - tag
+  - version
+  - "vers\xE3o"
+
+testing_concepts:
+  - test
+  - teste
+  - unit test
+  - "teste unit\xE1rio"
+  - integration test
+  - e2e
+  - mock
+  - stub
+  - fixture
+  - assertion
+  - coverage
+  - cobertura
+  - TDD
+  - BDD
+
+architecture_patterns:
+  - MVC
+  - MVP
+  - MVVM
+  - microservices
+  - "microsservi\xE7os"
+  - monolith
+  - "mon\xF3lito"
+  - layered
+  - hexagonal
+  - clean architecture
+  - middleware
+  - proxy
+  - gateway
+  - load balancer
+  - cache
+  - caching
+
+generic_patterns:
+  - ORM
+  - SDK
+  - CLI
+  - IDE
+  - CDN
+  - DNS
+  - ACL
+  - TTL
+  - ADR
+  - RFC
+  - SLA
+  - SLO
+  - SLI
+  - DSL
+  - IDL
+  - RPC
+  - ETL
+  - ELT
+
+# Keywords that can make trivial terms relevant (context-dependent)
+relevance_keywords:
+  - custom
+  - customizado
+  - "espec\xEDfico"
+  - especial
+  - "otimiza\xE7\xE3o"
+  - otimizar
+  - performance
+  - "migra\xE7\xE3o"
+  - migrar
+  - upgrade
+  - arquitetura
+  - "padr\xE3o"
+  - pattern
+  - "configura\xE7\xE3o complexa"
+  - "avan\xE7ado"

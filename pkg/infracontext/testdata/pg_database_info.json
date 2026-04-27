@@ -1,0 +1,12 @@
+{
+  "items": [
+    {
+      "name": "fusca_production",
+      "version": "PostgreSQL 15.4 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 7.3.1 20180712 (Red Hat 7.3.1-17), 64-bit",
+      "started_at": "2026-02-20T10:30:00+00:00",
+      "size_bytes": 5368709120,
+      "active_connections": 42,
+      "max_connections": 200
+    }
+  ]
+}

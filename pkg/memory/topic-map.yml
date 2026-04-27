@@ -1,0 +1,30 @@
+topics:
+  # Workflow operacional
+  code-review:    memory/feedback_code_review.md
+  heuristics:     memory/heuristics-ops.md
+  airbyte:        memory/airbyte-ops.md
+  datadog:        memory/datadog-ops.md
+  kotlin:         memory/kotlin-gradle.md
+  k8s:            memory/k8s-prod-access.md
+  investigation:  memory/investigation-methodology.md
+  webhook:        memory/webhook-ss2269.md
+  resend:         memory/feedback_resend_http_read.md
+  montecarlo:     memory/montecarlo-ops.md
+  herbie:         memory/herbie-ops.md
+  osm:            memory/reference_osm_project.md
+  playwright:     memory/feedback_playwright_dropdown.md
+  deps:           memory/feedback_deps_testing.md
+  mermaid:        memory/feedback_mermaid_linebreak.md
+
+  # Skills (carregadas pelo LLM quando invocadas)
+  webhook-lag:    .claude/skills/webhook-lag-resend/SKILL.md
+  driver-assoc:   .claude/skills/driver-association-investigation/SKILL.md
+  health:         .claude/skills/health-check/SKILL.md
+  pod-cleanup:    .claude/skills/pod-cleanup/SKILL.md
+  flink-deploy:   .claude/skills/flink-deploy-recovery/SKILL.md
+  figma:          .claude/skills/figma-to-refinement/SKILL.md
+  ai-radar:       .claude/skills/ai-radar/SKILL.md
+
+  # Runbooks operacionais — via `wtb doc get <id>`
+  # severino → wtb doc get severino-padr-es-e-heur-sticas
+  # herbie-dashboard → wtb doc get herbie-dashboard-runbook

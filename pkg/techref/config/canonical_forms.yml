@@ -1,0 +1,224 @@
+# Canonical form mappings: variation -> canonical name
+# Override: .workflow/deep-dives/canonical_forms.yml
+#
+# NOTE: These are now auto-generated from known_technologies.yml aliases.
+# This file contains ADDITIONAL mappings not covered by aliases,
+# plus legacy forms for backward compatibility.
+
+# Spring ecosystem
+spring: Spring
+springboot: Spring Boot
+"spring boot": Spring Boot
+"spring-boot": Spring Boot
+"spring cloud": Spring Cloud
+springcloud: Spring Cloud
+
+# Databases
+postgresql: PostgreSQL
+postgres: PostgreSQL
+postgre: PostgreSQL
+mysql: MySQL
+mongodb: MongoDB
+mongo: MongoDB
+redis: Redis
+elasticsearch: Elasticsearch
+elastic: Elasticsearch
+cassandra: Cassandra
+dynamodb: DynamoDB
+neo4j: Neo4j
+sqlite: SQLite
+mariadb: MariaDB
+couchdb: CouchDB
+rocksdb: RocksDB
+leveldb: LevelDB
+scylladb: ScyllaDB
+scylla: ScyllaDB
+cockroachdb: CockroachDB
+cockroach: CockroachDB
+timescaledb: TimescaleDB
+memcached: Memcached
+
+# Frontend frameworks
+react: React
+reactjs: React
+"react.js": React
+"react native": React Native
+reactnative: React Native
+vue: Vue
+vuejs: Vue
+"vue.js": Vue
+angular: Angular
+angularjs: Angular
+svelte: Svelte
+nextjs: Next.js
+"next.js": Next.js
+next: Next.js
+nuxt: Nuxt
+nuxtjs: Nuxt
+
+# Backend frameworks
+django: Django
+flask: Flask
+fastapi: FastAPI
+express: Express
+expressjs: Express
+nestjs: NestJS
+nest: NestJS
+rails: Rails
+laravel: Laravel
+"asp.net": "ASP.NET"
+aspnet: "ASP.NET"
+
+# Languages
+java: Java
+kotlin: Kotlin
+python: Python
+javascript: JavaScript
+js: JavaScript
+typescript: TypeScript
+ts: TypeScript
+golang: Go
+go-lang: Go
+rust: Rust
+"c#": "C#"
+csharp: "C#"
+ruby: Ruby
+php: PHP
+swift: Swift
+dart: Dart
+
+# Message queues
+kafka: Kafka
+"apache kafka": Kafka
+rabbitmq: RabbitMQ
+rabbit: RabbitMQ
+activemq: ActiveMQ
+nats: NATS
+
+# Cloud
+docker: Docker
+kubernetes: Kubernetes
+k8s: Kubernetes
+aws: AWS
+azure: Azure
+gcp: GCP
+terraform: Terraform
+ansible: Ansible
+nginx: Nginx
+traefik: Traefik
+consul: Consul
+vault: Vault
+argocd: ArgoCD
+"argo cd": ArgoCD
+helm: Helm
+
+# CI/CD
+jenkins: Jenkins
+circleci: CircleCI
+"circle ci": CircleCI
+"github actions": GitHub Actions
+"gitlab ci": GitLab CI
+gitlabci: GitLab CI
+
+# Auth
+oauth2: OAuth2
+oauth: OAuth2
+jwt: JWT
+saml: SAML
+"openid connect": OpenID Connect
+openid: OpenID Connect
+auth0: Auth0
+keycloak: Keycloak
+
+# APIs
+graphql: GraphQL
+grpc: gRPC
+websocket: WebSocket
+mqtt: MQTT
+
+# ORMs
+hibernate: Hibernate
+jpa: JPA
+sequelize: Sequelize
+prisma: Prisma
+
+# State management
+redux: Redux
+mobx: MobX
+zustand: Zustand
+
+# Build tools
+webpack: Webpack
+vite: Vite
+rollup: Rollup
+storybook: Storybook
+
+# Testing
+jest: Jest
+mocha: Mocha
+pytest: Pytest
+junit: JUnit
+
+# Monitoring
+prometheus: Prometheus
+grafana: Grafana
+datadog: DataDog
+"new relic": New Relic
+newrelic: New Relic
+sentry: Sentry
+splunk: Splunk
+
+# Mobile
+android: Android
+ios: iOS
+flutter: Flutter
+
+# Linters
+eslint: ESLint
+prettier: Prettier
+ktlint: Ktlint
+detekt: Detekt
+black: Black
+pylint: Pylint
+rubocop: RuboCop
+
+# Serialization
+avro: Avro
+protobuf: Protobuf
+thrift: Thrift
+messagepack: MessagePack
+
+# Frontend extras
+tailwind: Tailwind CSS
+tailwindcss: Tailwind CSS
+bootstrap: Bootstrap
+"material ui": Material UI
+materialui: Material UI
+chakra: Chakra UI
+"chakra ui": Chakra UI
+
+# Streaming
+flink: Flink
+"apache flink": Flink
+spark: Spark
+"apache spark": Spark
+
+# Mobile extras
+ionic: Ionic
+
+# Database extras
+oracle: Oracle
+"sql server": SQL Server
+mssql: SQL Server
+sqlserver: SQL Server
+
+# Message queue extras
+"redis pub/sub": "Redis Pub/Sub"
+
+# Architecture patterns
+cqrs: CQRS
+"event sourcing": Event Sourcing
+"saga pattern": Saga Pattern
+"circuit breaker": Circuit Breaker
+"api gateway": API Gateway
+"service mesh": Service Mesh

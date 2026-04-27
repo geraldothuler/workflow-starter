@@ -1,0 +1,110 @@
+{
+  "apiVersion": "apps/v1",
+  "kind": "DeploymentList",
+  "items": [
+    {
+      "metadata": {
+        "name": "api-server",
+        "namespace": "default",
+        "labels": {
+          "app": "api-server"
+        }
+      },
+      "spec": {
+        "replicas": 3,
+        "template": {
+          "spec": {
+            "containers": [
+              {
+                "name": "api",
+                "image": "myregistry/api-server:v1.2.0",
+                "resources": {
+                  "requests": { "cpu": "250m", "memory": "256Mi" },
+                  "limits": { "cpu": "500m", "memory": "512Mi" }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "status": {
+        "replicas": 3,
+        "readyReplicas": 3,
+        "availableReplicas": 3,
+        "conditions": [
+          { "type": "Available", "status": "True", "message": "Deployment has minimum availability" },
+          { "type": "Progressing", "status": "True", "message": "ReplicaSet has successfully progressed" }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "redis-cache",
+        "namespace": "default",
+        "labels": {
+          "app": "redis-cache"
+        }
+      },
+      "spec": {
+        "replicas": 2,
+        "template": {
+          "spec": {
+            "containers": [
+              {
+                "name": "redis",
+                "image": "redis:7.2",
+                "resources": {
+                  "requests": { "cpu": "100m", "memory": "128Mi" },
+                  "limits": { "cpu": "200m", "memory": "256Mi" }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "status": {
+        "replicas": 2,
+        "readyReplicas": 1,
+        "availableReplicas": 1,
+        "conditions": [
+          { "type": "Available", "status": "False", "message": "Deployment does not have minimum availability" },
+          { "type": "Progressing", "status": "True" }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "frontend",
+        "namespace": "default",
+        "labels": {
+          "app": "frontend"
+        }
+      },
+      "spec": {
+        "replicas": 2,
+        "template": {
+          "spec": {
+            "containers": [
+              {
+                "name": "nginx",
+                "image": "nginx:1.25",
+                "resources": {
+                  "requests": { "cpu": "50m", "memory": "64Mi" },
+                  "limits": { "cpu": "100m", "memory": "128Mi" }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "status": {
+        "replicas": 2,
+        "readyReplicas": 2,
+        "availableReplicas": 2,
+        "conditions": [
+          { "type": "Available", "status": "True", "message": "Deployment has minimum availability" }
+        ]
+      }
+    }
+  ]
+}

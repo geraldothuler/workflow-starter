@@ -1,0 +1,29 @@
+{
+  "integrations": [
+    {
+      "name": "postgresql",
+      "installed": true,
+      "type": "check"
+    },
+    {
+      "name": "redis",
+      "installed": true,
+      "type": "check"
+    },
+    {
+      "name": "docker",
+      "installed": true,
+      "type": "crawler"
+    },
+    {
+      "name": "nginx",
+      "installed": true,
+      "type": "check"
+    },
+    {
+      "name": "mysql",
+      "installed": false,
+      "type": "check"
+    }
+  ]
+}

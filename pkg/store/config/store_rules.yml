@@ -1,0 +1,51 @@
+# pkg/store/config/store_rules.yml
+# Heurísticas de segunda ordem — disparam sobre histórico acumulado, não execução pontual.
+# Camada 1 — Discovery 011 (Structured Store)
+#
+# window: quantas execuções consecutivas com o mesmo status disparam a regra
+# consecutive_status: status que precisa se repetir (warn | critical | error)
+# escalate_to: status sugerido no signal de saída
+# signal: mensagem — {n} é substituído pelo valor de window
+
+trend_rules:
+  - probe: db-health
+    window: 3
+    consecutive_status: warn
+    escalate_to: critical
+    signal: "db-health: {n} execuções consecutivas em warn → degradação persistente, avaliar intervenção"
+
+  - probe: db-health
+    window: 2
+    consecutive_status: critical
+    escalate_to: critical
+    signal: "db-health: {n} execuções críticas consecutivas → escalar imediatamente"
+
+  - probe: airbyte
+    window: 3
+    consecutive_status: warn
+    escalate_to: warn
+    signal: "airbyte: {n} execuções consecutivas em warn → revisar conexões com falha"
+
+  - probe: kafka-status
+    window: 3
+    consecutive_status: warn
+    escalate_to: critical
+    signal: "kafka-status: {n} execuções consecutivas em warn → lag crescente, risco de backpressure"
+
+  - probe: k8s-status
+    window: 3
+    consecutive_status: warn
+    escalate_to: warn
+    signal: "k8s-status: {n} execuções consecutivas em warn → pods instáveis"
+
+  - probe: snowflake
+    window: 5
+    consecutive_status: warn
+    escalate_to: warn
+    signal: "snowflake: {n} execuções lentas consecutivas → revisar query ou warehouse sizing"
+
+  - probe: montecarlo
+    window: 2
+    consecutive_status: critical
+    escalate_to: critical
+    signal: "montecarlo: {n} alertas críticos consecutivos → qualidade de dados comprometida"

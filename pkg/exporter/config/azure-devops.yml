@@ -1,0 +1,74 @@
+# ============================================================================
+# AZURE DEVOPS EXPORTER — HTTP REST (JSON Patch)
+# ============================================================================
+#
+# Pushes backlog to Azure DevOps via REST API v7.0.
+# Epics → Work Items (Epic type); Stories → Work Items (User Story type).
+# Parent-child linking via relation patch operations.
+#
+# Requires: AZDO_ORG_URL, AZDO_PROJECT, AZDO_PAT
+# API Docs: https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/work-items/create
+#
+# ============================================================================
+
+exporter:
+  id: azure-devops
+  name: "Azure DevOps"
+  description: "Push backlog to Azure DevOps"
+
+  auth:
+    credentials:
+      - name: "AZDO_ORG_URL"
+        required: true
+        description: "Azure DevOps org URL (e.g., https://dev.azure.com/myorg)"
+      - name: "AZDO_PROJECT"
+        required: true
+        description: "Azure DevOps project name"
+      - name: "AZDO_PAT"
+        required: true
+        description: "Personal Access Token (Work Items: Read & Write)"
+    resolve_order: ["env", "keyring", "encrypted-file"]
+    setup_guide: |
+      1. Create PAT: https://dev.azure.com/{org}/_usersSettings/tokens
+         Scopes: Work Items (Read & Write)
+      2. Configure:
+         export AZDO_ORG_URL='https://dev.azure.com/myorg'
+         export AZDO_PROJECT='MyProject'
+         export AZDO_PAT='your-pat-token'
+
+  transport:
+    type: http
+    base_url: "{{.AZDO_ORG_URL}}/{{.AZDO_PROJECT}}/_apis"
+    auth_type: basic
+    auth_value: "{{base64 \"\" .AZDO_PAT}}"
+    headers:
+      Content-Type: "application/json-patch+json"
+      Accept: "application/json"
+    timeout: "30s"
+
+  push:
+    epic:
+      method: POST
+      path: "/wit/workitems/$Epic?api-version=7.0"
+      body: |
+        [
+          {"op": "add", "path": "/fields/System.Title", "value": "{{jsonEscape .epic.Title}}"},
+          {"op": "add", "path": "/fields/System.Description", "value": "{{jsonEscape .epic.Description}}"},
+          {"op": "add", "path": "/fields/System.Tags", "value": "{{join .epic.Tags \"; \"}}"}
+        ]
+      extract:
+        epic_id: "id"
+        epic_url: "url"
+
+    story:
+      method: POST
+      path: "/wit/workitems/$User%20Story?api-version=7.0"
+      body: |
+        [
+          {"op": "add", "path": "/fields/System.Title", "value": "{{jsonEscape .story.Title}}"},
+          {"op": "add", "path": "/fields/System.Description", "value": "{{jsonEscape (printf \"What: %s\\nWhy: %s\" .story.What .story.Why)}}"},
+          {"op": "add", "path": "/fields/Microsoft.VSTS.Scheduling.StoryPoints", "value": {{.story.Effort}}},
+          {"op": "add", "path": "/relations/-", "value": {"rel": "System.LinkTypes.Hierarchy-Reverse", "url": "{{.epic_url}}"}}
+        ]
+      extract:
+        story_id: "id"

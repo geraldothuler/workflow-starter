@@ -1,0 +1,16 @@
+{
+  "dashboards": [
+    {
+      "title": "Production Overview",
+      "url": "/dashboard/abc-123/production-overview",
+      "author_handle": "admin@company.com",
+      "layout_type": "ordered"
+    },
+    {
+      "title": "API Gateway Performance",
+      "url": "/dashboard/def-456/api-gateway-performance",
+      "author_handle": "platform-team@company.com",
+      "layout_type": "free"
+    }
+  ]
+}

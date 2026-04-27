@@ -1,0 +1,4 @@
+api-server-7b8f9c6d4-x2k9p   125m   180Mi
+postgres-0                     450m   950Mi
+redis-cache-5f7d8c9b2-lm3np   50m    85Mi
+frontend-abc123-def456         30m    45Mi

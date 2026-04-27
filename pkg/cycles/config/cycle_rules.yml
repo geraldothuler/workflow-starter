@@ -1,0 +1,26 @@
+cycle:
+  threshold: 6
+  signals:
+    - name: git_changes
+      weight: 2
+      command: "git diff --stat HEAD"
+      description: "Files changed since last commit or HEAD"
+    - name: tests_pass
+      weight: 3
+      command: "go test ./... -count=1"
+      description: "All test packages pass"
+    - name: build_pass
+      weight: 3
+      command: "go build ./cmd/wtb/..."
+      description: "Binary compiles successfully"
+    - name: time_elapsed
+      weight: 1
+      threshold_minutes: 30
+      description: "Minimum time since last savepoint"
+    - name: packages_touched
+      weight: 1
+      command: "git diff --stat HEAD"
+      description: "Distinct Go packages modified"
+  savepoint:
+    dir: ".workflow/savepoints"
+    format: "savepoint-2006-01-02-150405.md"

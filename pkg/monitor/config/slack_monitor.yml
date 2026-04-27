@@ -1,0 +1,27 @@
+schema_version: 1
+poll_interval_seconds: 30
+channels:
+  - alarms
+signals:
+  p0:
+    score: 90
+    keywords:
+      - "fora do ar"
+      - "todos os usuarios"
+      - "producao parada"
+      - "P0"
+      - "critico"
+      - "down"
+      - "indisponivel"
+      - "parou"
+  p1:
+    score: 70
+    keywords:
+      - "lento"
+      - "erro"
+      - "falha"
+      - "bug"
+      - "timeout"
+      - "broken"
+      - "problema"
+      - "estranho"

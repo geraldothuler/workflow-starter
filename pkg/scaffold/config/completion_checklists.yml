@@ -1,0 +1,85 @@
+# completion_checklists.yml — Completion validation checklists
+# Absorbed from skills/wtb-completion-handler/SKILL.md (Phase 9.1c)
+# Loaded via go:embed in pkg/scaffold/
+
+checklists:
+  feature:
+    title: "Feature Implementation"
+    items:
+      code:
+        - "Codigo funciona (testado)"
+        - "Testes escritos (unit/integration)"
+        - "Zero warnings/errors de compilacao"
+        - "Self-review feito"
+      docs:
+        - "README atualizado (se necessario)"
+        - "API documentada (se nova API)"
+        - "Comentarios no codigo (complexidade)"
+      quality:
+        - "Segue padroes do projeto"
+        - "Sem codigo duplicado"
+        - "Performance aceitavel"
+        - "Seguranca considerada"
+      integration:
+        - "Integra com sistema existente"
+        - "Backward compatible (se aplicavel)"
+        - "Migrations criadas (se DB)"
+        - "ENV vars documentadas (se novas)"
+
+  bug_fix:
+    title: "Bug Fix"
+    items:
+      fix:
+        - "Bug reproduzido antes do fix"
+        - "Root cause identificada"
+        - "Fix testado"
+        - "Nao quebra nada existente"
+      prevention:
+        - "Teste de regressao adicionado"
+        - "Documentacao atualizada"
+        - "Outros lugares com mesmo bug verificados"
+
+  skill:
+    title: "Skill/Pattern"
+    items:
+      content:
+        - "SKILL.md atualizado"
+        - "Exemplos claros"
+        - "Anti-patterns documentados"
+        - "Gatilhos bem definidos"
+      integration:
+        - "STATUS.yml atualizado"
+        - "CLAUDE.md atualizado"
+        - "Referenciado em outros docs"
+
+  documentation:
+    title: "Documentation"
+    items:
+      content:
+        - "Informacao precisa"
+        - "Exemplos funcionam"
+        - "Links validados"
+        - "Atualizada (nao obsoleta)"
+      quality:
+        - "Linguagem clara"
+        - "Formatacao consistente"
+        - "Indexes atualizados"
+
+  commit_types:
+    feat: "Nova feature"
+    fix: "Bug fix"
+    docs: "Documentacao"
+    refactor: "Refactoring"
+    test: "Testes"
+    chore: "Manutencao"
+
+  triggers:
+    keywords:
+      - "pronto"
+      - "concluido"
+      - "terminei"
+      - "finalizado"
+      - "implementado"
+      - "funcionando"
+      - "done"
+      - "finished"

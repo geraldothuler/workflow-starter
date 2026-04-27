@@ -1,0 +1,236 @@
+# Known technologies - Layer 1 extraction (confidence 1.0)
+# Override: .workflow/deep-dives/known_technologies.yml
+
+backend_frameworks:
+  - name: Spring Boot
+    aliases: [springboot, spring-boot, "spring boot"]
+  - name: Spring
+  - name: Spring Cloud
+    aliases: [springcloud, "spring cloud"]
+  - name: Django
+  - name: Flask
+  - name: FastAPI
+    aliases: [fastapi]
+  - name: Express
+    aliases: [expressjs]
+  - name: NestJS
+    aliases: [nestjs, nest]
+  - name: Rails
+  - name: Laravel
+  - name: "ASP.NET"
+    aliases: [aspnet, "asp.net"]
+
+frontend_frameworks:
+  - name: React
+    aliases: [reactjs, "react.js"]
+  - name: Vue
+    aliases: [vuejs, "vue.js"]
+  - name: Angular
+    aliases: [angularjs]
+  - name: Svelte
+  - name: Next.js
+    aliases: [nextjs, next]
+  - name: Nuxt
+    aliases: [nuxtjs]
+  - name: React Native
+    aliases: [reactnative, "react native"]
+  - name: Flutter
+  - name: Ionic
+
+languages:
+  - name: Java
+  - name: Kotlin
+  - name: Python
+  - name: JavaScript
+    aliases: [js]
+  - name: TypeScript
+    aliases: [ts]
+  - name: Go
+    aliases: [golang, go-lang]
+  - name: Rust
+  - name: "C#"
+    aliases: [csharp]
+  - name: Ruby
+  - name: PHP
+  - name: Swift
+  - name: Dart
+
+databases:
+  - name: PostgreSQL
+    aliases: [postgres, postgre, postgresql]
+  - name: MySQL
+    aliases: [mysql]
+  - name: MongoDB
+    aliases: [mongo, mongodb]
+  - name: Redis
+  - name: Cassandra
+  - name: DynamoDB
+    aliases: [dynamodb]
+  - name: Elasticsearch
+    aliases: [elastic, elasticsearch]
+  - name: Neo4j
+    aliases: [neo4j]
+  - name: MariaDB
+    aliases: [mariadb]
+  - name: SQLite
+    aliases: [sqlite]
+  - name: Oracle
+  - name: SQL Server
+    aliases: [mssql, sqlserver, "sql server"]
+  - name: CouchDB
+    aliases: [couchdb]
+  - name: RocksDB
+    aliases: [rocksdb]
+  - name: LevelDB
+    aliases: [leveldb]
+  - name: ScyllaDB
+    aliases: [scylladb, scylla]
+  - name: CockroachDB
+    aliases: [cockroachdb, cockroach]
+  - name: TimescaleDB
+    aliases: [timescaledb]
+  - name: Memcached
+    aliases: [memcached]
+
+message_queues:
+  - name: Kafka
+    aliases: ["apache kafka"]
+  - name: RabbitMQ
+    aliases: [rabbit, rabbitmq]
+  - name: ActiveMQ
+    aliases: [activemq]
+  - name: "Redis Pub/Sub"
+  - name: NATS
+    aliases: [nats]
+
+cloud_infrastructure:
+  - name: Docker
+  - name: Kubernetes
+    aliases: [k8s]
+  - name: AWS
+    aliases: [aws]
+  - name: Azure
+    aliases: [azure]
+  - name: GCP
+    aliases: [gcp]
+  - name: Terraform
+  - name: Ansible
+  - name: Jenkins
+  - name: CircleCI
+    aliases: [circleci, "circle ci"]
+  - name: GitHub Actions
+    aliases: ["github actions"]
+  - name: GitLab CI
+    aliases: ["gitlab ci", gitlabci]
+  - name: Nginx
+    aliases: [nginx]
+  - name: Traefik
+    aliases: [traefik]
+  - name: Consul
+  - name: Vault
+  - name: ArgoCD
+    aliases: [argocd, "argo cd"]
+  - name: Helm
+
+auth_security:
+  - name: OAuth2
+    aliases: [oauth2, oauth]
+  - name: JWT
+    aliases: [jwt]
+  - name: SAML
+    aliases: [saml]
+  - name: OpenID Connect
+    aliases: ["openid connect", openid]
+  - name: Auth0
+    aliases: [auth0]
+  - name: Keycloak
+
+apis_protocols:
+  - name: GraphQL
+    aliases: [graphql]
+  - name: gRPC
+    aliases: [grpc]
+  - name: MQTT
+    aliases: [mqtt]
+
+orms_data:
+  - name: Hibernate
+  - name: JPA
+    aliases: [jpa]
+  - name: Sequelize
+  - name: Prisma
+
+state_management:
+  - name: Redux
+  - name: MobX
+    aliases: [mobx]
+  - name: Zustand
+
+build_tools:
+  - name: Webpack
+  - name: Vite
+  - name: Rollup
+  - name: Storybook
+
+testing:
+  - name: Jest
+  - name: Mocha
+  - name: Pytest
+    aliases: [pytest]
+  - name: JUnit
+    aliases: [junit]
+
+monitoring:
+  - name: Prometheus
+  - name: Grafana
+  - name: DataDog
+    aliases: [datadog]
+  - name: New Relic
+    aliases: [newrelic, "new relic"]
+  - name: Sentry
+  - name: Splunk
+
+linters:
+  - name: ESLint
+    aliases: [eslint]
+  - name: Prettier
+  - name: Ktlint
+    aliases: [ktlint]
+  - name: Detekt
+    aliases: [detekt]
+  - name: Black
+  - name: Pylint
+    aliases: [pylint]
+  - name: RuboCop
+    aliases: [rubocop]
+
+patterns:
+  - name: CQRS
+  - name: Event Sourcing
+  - name: Saga Pattern
+  - name: Circuit Breaker
+  - name: API Gateway
+  - name: Service Mesh
+
+serialization:
+  - name: Avro
+  - name: Protobuf
+    aliases: [protobuf]
+  - name: Thrift
+  - name: MessagePack
+    aliases: [messagepack]
+
+frontend_extras:
+  - name: Tailwind CSS
+    aliases: [tailwind, tailwindcss]
+  - name: Bootstrap
+  - name: Material UI
+    aliases: [materialui, "material ui"]
+  - name: Chakra UI
+    aliases: [chakra, "chakra ui"]
+
+streaming:
+  - name: Flink
+    aliases: ["apache flink"]
+  - name: Spark
+    aliases: ["apache spark"]

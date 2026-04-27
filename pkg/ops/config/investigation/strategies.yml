@@ -1,0 +1,148 @@
+strategies:
+  # ── DATABASE SOURCE EVALUATION ─────────────────────────────────────────────
+  # Quando: qualquer consulta/análise em banco de dados — fonte única ou cruzamento.
+  # Princípio: Python (pandas opcional) para qualquer avaliação de fonte de dados.
+  # LLM = O(tokens) = O(data) — impreciso e não escala. Python é determinístico.
+  # Aprendizado SS-2282: 6238 SF × 3133 ScyllaDB rows — LLM teria consumido
+  # ~50k tokens e sido impreciso. Python cruzou em < 5s, zero tokens.
+  - name: database_source_evaluation
+    description: "Qualquer consulta/análise em banco — Python obrigatório, pandas opcional"
+    triggers:
+      - field: dataset_rows
+        op: ">"
+        value: 10
+      - field: has_db_access
+        op: "=="
+        value: 1
+    operator: OR
+    llm_usage: none
+    prefer:
+      tool: python_pandas
+      pattern: "query → Python parse → [pandas: merge/groupby/filter] → analyze → to_csv(evidência)"
+    avoid:
+      - tool: llm_scraping
+        reason: "O(tokens)=O(data) — impreciso para joins/contagem, não escala acima de ~10 linhas"
+      - tool: llm_inline_analysis
+        reason: "LLM perde precisão em dados tabulares — usar pandas ou análise Python determinística"
+    steps:
+      - "pandas é opcional: para output simples, dict/list Python basta; instalar só se precisar de join/groupby"
+      - "fonte única: cursor.fetchall() → list/dict → análise direta — zero LLM"
+      - "export ScyllaDB: pod efêmero cassandra:4.1 + bash redirect + kubectl cp /tmp/out.txt"
+      - "export Snowflake: snowflake-connector-python + cursor → DataFrame"
+      - "dtype={'device_id': str} ao ler CSVs com IMEI — evita cast int64 que quebra joins"
+      - "pd.to_datetime(..., format='ISO8601', utc=True) para timestamps com timezone misto"
+      - "cruzamento: pd.merge por device_id + abs(event_time diff) < 5s para matching de eventos"
+      - "groupby + ratio → identificar anomalias (threshold calibrado por domínio)"
+      - "to_csv() antes de qualquer ação destrutiva — evidência irrefutável"
+    evidence: "SS-2282 (2026-02-28): 6238 SF × 3133 ScyllaDB rows cruzados em < 5s, zero tokens"
+
+  # ── SCYLLADB ACCESS ────────────────────────────────────────────────────────
+  # Quando: qualquer acesso a ScyllaDB (herbie keyspace ou similar).
+  # Anti-padrões descobertos: cassandra-driver quebra no Python 3.14+;
+  # cqlsh COPY TO STDOUT causa OOM em queries sem WHERE.
+  - name: scylladb_access
+    description: "Acesso a ScyllaDB via kubectl — pod efêmero cassandra:4.1"
+    triggers:
+      - field: data_source
+        op: "=="
+        string_value: "scylladb"
+    llm_usage: none
+    prefer:
+      tool: ephemeral_pod_cqlsh
+      pattern: "kubectl run cassandra:4.1 → bash redirect /tmp → kubectl cp → parse local"
+    avoid:
+      - tool: cassandra_driver_python
+        reason: "Incompatível Python 3.14+ — TarFile.chown() API break; falha no pip install"
+      - tool: cqlsh_copy_to_stdout
+        reason: "OOM (exit 137) em queries sem WHERE clause — pod morto antes de retornar dados"
+      - tool: subprocess_pipe_parsing
+        reason: "cqlsh output pipe falha silenciosamente > ~100 linhas — sempre usar redirect + cp"
+    steps:
+      - "POD=cqlsh-$(date +%s)"
+      - "kubectl run $POD -n ecosystem --context cobli-prod-devices --image=cassandra:4.1 --restart=Never -- sleep 300"
+      - "aguardar Running: kubectl get pod $POD -n ecosystem --context cobli-prod-devices -o jsonpath='{.status.phase}'"
+      - "kubectl exec $POD -n ecosystem -- bash -c \"cqlsh HOST 9042 -u USER -p PASS --execute \\\"SELECT ...\\\" > /tmp/out.txt 2>/dev/null\""
+      - "kubectl cp ecosystem/$POD:/tmp/out.txt /tmp/out.txt"
+      - "parse: line.split('|') + strip() — funciona para output tabular cqlsh"
+      - "kubectl delete pod $POD -n ecosystem --ignore-not-found (cleanup obrigatório)"
+    evidence: "SS-2282: cassandra-driver falhou (Python 3.14), ephemeral pod retornou 3133 linhas corretamente"
+
+  # ── KUBECTL LOG INVESTIGATION ──────────────────────────────────────────────
+  # Quando: análise de logs de pods Kubernetes.
+  # Anti-padrão: ler log completo via LLM — Flink tem 100k+ linhas, sinal some no ruído.
+  # Anti-padrão: label selector — labels podem não estar configurados no pod.
+  - name: kubectl_log_investigation
+    description: "Logs de pods K8s — filtrar na origem com grep, nome direto do pod"
+    triggers:
+      - field: access_type
+        op: "=="
+        string_value: "kubectl_logs"
+    llm_usage: none
+    prefer:
+      tool: grep_at_source
+      pattern: "kubectl logs <pod-name> --since=Xh | grep -i 'pattern'"
+    avoid:
+      - tool: label_selector_logs
+        reason: "Labels podem não estar configurados — usar nome do pod diretamente (ex: jobmanager-0)"
+      - tool: full_log_llm_read
+        reason: "Flink jobmanager logs têm 100k+ linhas; LLM perde sinal no ruído"
+    steps:
+      - "kubectl logs <pod> -n <ns> --context <ctx> --since=2h | grep -i 'error|exception|retry|warn'"
+      - "para Flink: pod = alexstrasza-webhook-flink-jobmanager-0 (nome direto, não label selector)"
+      - "K8s events: kubectl get events -n <ns> --sort-by=.lastTimestamp -o json → parse pandas"
+      - "ATENÇÃO: eventos K8s expiram em ~1h (default retention) — histórico indisponível via kubectl"
+      - "para histórico além de 1h: CloudWatch Logs ou Datadog (se habilitados no cluster)"
+    evidence: "SS-2282: grep retornou sinal em < 1s; K8s events do incidente já haviam expirado"
+
+  # ── CLOUDWATCH METRIC QUERY ────────────────────────────────────────────────
+  # Quando: consulta de métricas CloudWatch AWS (MSK, EC2, RDS, etc).
+  # Anti-padrões: paginator não funciona; Sum distorce métricas de contagem.
+  - name: cloudwatch_metric_query
+    description: "CloudWatch via boto3 — get_metric_statistics direto, Average para contagem"
+    triggers:
+      - field: access_type
+        op: "=="
+        string_value: "cloudwatch"
+    llm_usage: none
+    prefer:
+      tool: boto3_get_metric_statistics
+      pattern: "get_metric_statistics (não paginator) + stat=Average + pandas DataFrame"
+    avoid:
+      - tool: cloudwatch_paginator
+        reason: "get_metric_statistics não suporta paginator — OperationNotPageableError imediato"
+      - tool: sum_statistic_for_count_metrics
+        reason: "Sum de ActiveControllerCount = N_amostras × valor (retorna 5 em vez de 1 num período de 5min)"
+    steps:
+      - "session = boto3.Session(profile_name='cobli-tech', region_name='us-east-1')"
+      - "cw = session.client('cloudwatch')"
+      - "resp = cw.get_metric_statistics(Namespace='AWS/Kafka', MetricName=..., Statistics=['Average'], Period=300, ...)"
+      - "MSK cluster: cobli-msk-cluster-prod (3 brokers, Kafka 3.6.0)"
+      - "consumer group lag (SumOffsetLag/EstimatedTimeLag): requer PER_TOPIC_PER_PARTITION"
+      - "cluster atual em PER_TOPIC_PER_BROKER — métricas de consumer group indisponíveis"
+      - "dados históricos não retroativos — habilitar PER_TOPIC_PER_PARTITION antes do próximo incidente"
+    evidence: "SS-2282: paginator → OperationNotPageableError; Sum retornou 5 vs esperado 1 para ActiveControllerCount"
+
+  # ── INVESTIGATION OUTPUT EXPORT ────────────────────────────────────────────
+  # Quando: qualquer fonte retorna > 50 linhas de output.
+  # Regra universal: exportar antes de analisar ou agir.
+  - name: investigation_output_export
+    description: "Output > 50 linhas — exportar CSV antes de analisar ou agir"
+    triggers:
+      - field: output_rows
+        op: ">"
+        value: 50
+    llm_usage: none
+    prefer:
+      tool: csv_export_then_pandas
+      pattern: "to_csv(evidência) → análise pandas → decisão → ação"
+    avoid:
+      - tool: llm_inline_analysis
+        reason: "LLM perde precisão e introduz viés em dados tabulares > 50 linhas"
+      - tool: act_before_export
+        reason: "Sem CSV antes da ação: sem evidência, sem rollback informado, sem auditoria"
+    steps:
+      - "nomenclatura: <contexto>-<id[:8]>-<timestamp_utc>.csv"
+      - "mínimo 3 artefatos em operações de retransmissão: gaps (antes), events (o que enviar), result (depois)"
+      - "exportar em /tmp/ + copiar para ~/.workflow/drafts/ para persistência entre sessões"
+      - "incluir run_id em cada CSV para rastreabilidade (ex: retransmit-b9ebc418-20260228-1740700000)"
+    evidence: "SS-2282: 3 CSVs gerados como evidência operacional da retransmissão"

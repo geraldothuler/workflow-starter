@@ -1,0 +1,63 @@
+# ============================================================================
+# FIGMA SOURCE — MCP-first
+# ============================================================================
+#
+# Fetches Figma design files via the official Figma MCP server.
+# Converts the file tree to structured markdown using the JSON walker.
+#
+# Requires: FIGMA_ACCESS_TOKEN (Personal Access Token)
+# MCP Server: @anthropic-ai/figma-mcp (GA)
+#
+# ============================================================================
+
+source:
+  id: figma
+  name: "Figma"
+  description: "Imports Figma design files as structured markdown"
+
+  url_patterns:
+    - "figma\\.com/(file|design)/"
+
+  url_parser:
+    regex: "figma\\.com/(?:file|design)/([^/]+)"
+    captures:
+      file_key: 1
+
+  transport:
+    type: mcp
+    command: "npx"
+    args: ["-y", "@anthropic-ai/figma-mcp"]
+    env:
+      FIGMA_PERSONAL_ACCESS_TOKEN: "${FIGMA_ACCESS_TOKEN}"
+    timeout: "60s"
+    startup_timeout: "15s"
+
+  auth:
+    env_var: "FIGMA_ACCESS_TOKEN"
+    setup_guide: |
+      How to get your Figma token:
+      1. Go to figma.com/developers/api#access-tokens
+      2. Generate a "Personal Access Token"
+      3. Configure: export FIGMA_ACCESS_TOKEN='figd_xxx...'
+
+      Then run:
+        wtb source fetch https://www.figma.com/design/<file_key>/<name>
+
+  fetch_steps:
+    - tool: "get_file"
+      args:
+        file_key: "{{.file_key}}"
+      extract:
+        title: "name"
+        last_modified: "lastModified"
+      store_as: "file_data"
+
+  markdown:
+    mode: walker
+    walker:
+      source_key: "file_data"
+      max_depth: 6
+      heading_keys: ["name", "label"]
+      skip_keys: ["id", "pluginData", "exportSettings", "blendMode", "absoluteBoundingBox", "absoluteRenderBounds", "constraints", "relativeTransform", "layoutAlign", "layoutGrow", "fills", "strokes", "strokeWeight", "effects"]
+      code_keys: ["characters", "css"]
+      value_keys: ["type", "visible"]

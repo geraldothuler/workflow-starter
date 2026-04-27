@@ -1,0 +1,227 @@
+# ============================================================================
+# Microservices Patterns (12)
+# Source: "Microservices Patterns" + "Release It!" + "Cloud Design Patterns"
+# Authors: Chris Richardson, Michael Nygard, Microsoft
+# ============================================================================
+
+categories:
+  - id: data
+    name: "Data Management"
+  - id: integration
+    name: "Integration & Communication"
+  - id: resilience
+    name: "Resilience & Reliability"
+  - id: structural
+    name: "Structural Patterns"
+  - id: migration
+    name: "Migration & Evolution"
+
+patterns:
+
+  - id: cqrs
+    name: "CQRS"
+    type: pattern
+    level: universal
+    category: data
+    source:
+      reference: "Microservices Patterns"
+      author: "Chris Richardson"
+    description: "Separates read and write operations into different models"
+    when_to_use:
+      - "Read and write workloads have different scalability requirements"
+      - "Complex domain with distinct query and command models"
+      - "Event-sourced system needing read-optimized projections"
+    anti_patterns:
+      - "Simple CRUD with uniform read/write ratios"
+    related_patterns: ["event-sourcing", "domain-events"]
+    keywords: ["read model", "write model", "query", "command", "projection"]
+
+  - id: event-sourcing
+    name: "Event Sourcing"
+    type: pattern
+    level: universal
+    category: data
+    source:
+      reference: "Microservices Patterns"
+      author: "Chris Richardson"
+    description: "Stores state changes as a sequence of events rather than current state"
+    when_to_use:
+      - "Full audit trail required by regulation"
+      - "Need to reconstruct past states"
+      - "Complex domain events drive business logic"
+    anti_patterns:
+      - "Simple read-heavy applications"
+      - "Systems where current state is always sufficient"
+    related_patterns: ["cqrs", "domain-events"]
+    keywords: ["event store", "replay", "audit", "immutable", "append-only"]
+
+  - id: saga
+    name: "Saga Pattern"
+    type: pattern
+    level: universal
+    category: data
+    source:
+      reference: "Microservices Patterns"
+      author: "Chris Richardson"
+    description: "Manages distributed transactions through a sequence of local transactions with compensating actions"
+    when_to_use:
+      - "Distributed transactions across multiple microservices"
+      - "Long-running business processes spanning bounded contexts"
+    anti_patterns:
+      - "Single database transactions suffice"
+    related_patterns: ["circuit-breaker", "outbox"]
+    keywords: ["distributed transaction", "compensation", "orchestration", "choreography"]
+
+  - id: circuit-breaker
+    name: "Circuit Breaker"
+    type: pattern
+    level: universal
+    category: resilience
+    source:
+      reference: "Release It!"
+      author: "Michael Nygard"
+    description: "Prevents cascading failures by stopping requests to unhealthy services"
+    when_to_use:
+      - "Calling external services or APIs that may be unreliable"
+      - "Microservice architecture with inter-service calls"
+      - "Need graceful degradation when dependencies fail"
+    anti_patterns:
+      - "Internal function calls within a monolith"
+    related_patterns: ["bulkhead", "retry"]
+    keywords: ["failure", "timeout", "fallback", "degradation", "resilience"]
+
+  - id: api-gateway
+    name: "API Gateway"
+    type: pattern
+    level: universal
+    category: integration
+    source:
+      reference: "Microservices Patterns"
+      author: "Chris Richardson"
+    description: "Single entry point for all client requests, routing to appropriate microservices"
+    when_to_use:
+      - "Multiple microservices need a unified API surface"
+      - "Cross-cutting concerns (auth, rate limiting, logging) need centralization"
+    anti_patterns:
+      - "Monolithic application with single backend"
+    related_patterns: ["bff", "service-mesh"]
+    keywords: ["gateway", "routing", "rate limiting", "authentication", "proxy"]
+
+  - id: bff
+    name: "Backend for Frontend (BFF)"
+    type: pattern
+    level: universal
+    category: integration
+    source:
+      reference: "Microservices Patterns"
+      author: "Chris Richardson"
+    description: "Dedicated backend services tailored for specific frontend clients"
+    when_to_use:
+      - "Web and mobile clients need fundamentally different data shapes"
+      - "Frontend teams need autonomy to shape their APIs"
+    anti_patterns:
+      - "Single client type"
+    related_patterns: ["api-gateway"]
+    keywords: ["mobile", "web", "frontend", "client-specific", "tailored API"]
+
+  - id: strangler-fig
+    name: "Strangler Fig (Incremental Migration)"
+    type: pattern
+    level: universal
+    category: migration
+    source:
+      reference: "Microservices Patterns"
+      author: "Chris Richardson"
+    description: "Gradually replaces legacy system by routing requests to new system piece by piece"
+    when_to_use:
+      - "Migrating from monolith to microservices"
+      - "Cannot do big-bang replacement due to risk"
+    anti_patterns:
+      - "Greenfield project with no legacy"
+    related_patterns: ["anti-corruption-layer"]
+    keywords: ["migration", "legacy", "monolith", "incremental", "modernization"]
+
+  - id: database-per-service
+    name: "Database per Service"
+    type: pattern
+    level: universal
+    category: data
+    source:
+      reference: "Microservices Patterns"
+      author: "Chris Richardson"
+    description: "Each microservice owns and manages its own database"
+    when_to_use:
+      - "Microservice architecture requiring data isolation"
+      - "Teams need autonomy to choose storage technology"
+    anti_patterns:
+      - "Services that always need joins across each other's data"
+    related_patterns: ["saga", "event-driven"]
+    keywords: ["microservice", "data isolation", "schema", "ownership"]
+
+  - id: event-driven
+    name: "Event-Driven Architecture"
+    type: pattern
+    level: universal
+    category: integration
+    source:
+      reference: "Microservices Patterns"
+      author: "Chris Richardson"
+    description: "Services communicate through events via message brokers"
+    when_to_use:
+      - "Loosely coupled microservices need asynchronous communication"
+      - "Variable throughput workloads needing buffering"
+    anti_patterns:
+      - "Request-response is sufficient and simpler"
+    related_patterns: ["domain-events", "saga", "outbox"]
+    keywords: ["Kafka", "RabbitMQ", "SQS", "pub/sub", "async", "message broker"]
+
+  - id: outbox
+    name: "Transactional Outbox"
+    type: pattern
+    level: universal
+    category: data
+    source:
+      reference: "Microservices Patterns"
+      author: "Chris Richardson"
+    description: "Guarantees at-least-once event delivery by writing events to database alongside state changes"
+    when_to_use:
+      - "Need reliable event publishing from database-backed services"
+      - "Dual writes (DB + message broker) cause inconsistency"
+    anti_patterns:
+      - "Occasional message loss is acceptable"
+    related_patterns: ["saga", "domain-events", "cdc"]
+    keywords: ["outbox", "CDC", "dual write", "at-least-once", "Debezium"]
+
+  - id: sidecar
+    name: "Sidecar Pattern"
+    type: pattern
+    level: universal
+    category: structural
+    source:
+      reference: "Cloud Design Patterns"
+      author: "Microsoft"
+    description: "Deploys helper components alongside the main application in the same host/pod"
+    when_to_use:
+      - "Cross-cutting concerns (logging, monitoring) need to be co-located"
+      - "Polyglot services needing consistent infrastructure behavior"
+    anti_patterns:
+      - "Monolithic deployment where in-process is simpler"
+    related_patterns: ["service-mesh"]
+    keywords: ["sidecar", "proxy", "agent", "pod", "container"]
+
+  - id: service-mesh
+    name: "Service Mesh"
+    type: pattern
+    level: universal
+    category: integration
+    source:
+      reference: "Cloud Design Patterns"
+      author: "Microsoft"
+    description: "Infrastructure layer for handling service-to-service communication with observability"
+    when_to_use:
+      - "Large microservice deployment (10+ services)"
+      - "Need mTLS, traffic management, circuit breaking at infrastructure level"
+    anti_patterns:
+      - "Small deployment (< 5 services)"
+    related_patterns: ["api-gateway", "circuit-breaker", "sidecar"]
+    keywords: ["Istio", "Linkerd", "mTLS", "observability", "mesh"]

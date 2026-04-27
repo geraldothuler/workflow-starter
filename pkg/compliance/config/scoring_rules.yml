@@ -1,0 +1,42 @@
+# scoring_rules.yml — Clausula Petrea scoring rules
+# Absorbed from skills/wtb-petrea-clause-guardrail/ (Phase 9.2f)
+# Loaded via go:embed in pkg/compliance/
+
+clausula_petrea:
+  enabled: true
+  socratic_probes_before_options: 1
+  one_question_at_a_time: true
+
+  scoring:
+    criteria:
+      - id: value
+        weight: 0.40
+        scale: "1-10"
+        description: "Valor entregue (negocio + usuario)"
+      - id: viability
+        weight: 0.30
+        scale: "1-10"
+        description: "Viabilidade tecnica (complexidade, risco, time)"
+      - id: low_risk
+        weight: 0.30
+        scale: "1-10"
+        description: "Baixo risco (reversibilidade, dependencias)"
+
+    rules:
+      - "Scores within ±1 → preferencia pessoal, nao tecnica"
+      - "Uma opcao >=2 pontos acima → destacar e justificar"
+      - "Ambiguidade → adicionar Perguntas de Refinamento"
+
+  required_for:
+    - "architectural decisions"
+    - "strategic choices"
+    - "technology selection"
+    - "trade-off analysis"
+
+  output_format:
+    sections:
+      - "Opcoes (minimo 2, maximo 4)"
+      - "Criterios com scores"
+      - "Score ponderado por opcao"
+      - "Recomendacao com justificativa"
+      - "Perguntas de refinamento (se ambiguo)"

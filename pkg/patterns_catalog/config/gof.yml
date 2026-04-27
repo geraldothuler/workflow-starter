@@ -1,0 +1,425 @@
+# ============================================================================
+# GoF — Gang of Four Design Patterns (23)
+# Source: "Design Patterns: Elements of Reusable Object-Oriented Software"
+# Authors: Gamma, Helm, Johnson, Vlissides (1994)
+# ============================================================================
+
+categories:
+  - id: creational
+    name: "Creational Patterns"
+  - id: structural
+    name: "Structural Patterns"
+  - id: behavioral
+    name: "Behavioral Patterns"
+
+patterns:
+
+  # ==========================================================================
+  # Creational (5)
+  # ==========================================================================
+
+  - id: abstract-factory
+    name: "Abstract Factory"
+    type: pattern
+    level: universal
+    category: creational
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Provide an interface for creating families of related objects without specifying concrete classes"
+    when_to_use:
+      - "System must be independent of how its products are created"
+      - "Multiple families of related products need to be used together"
+    anti_patterns:
+      - "Only one product family exists"
+    related_patterns: ["factory-method", "builder"]
+    keywords: ["family", "related objects", "platform", "toolkit"]
+
+  - id: builder
+    name: "Builder"
+    type: pattern
+    level: universal
+    category: creational
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Separate construction of a complex object from its representation"
+    when_to_use:
+      - "Complex object with many optional parameters"
+      - "Construction process must allow different representations"
+    anti_patterns:
+      - "Simple objects with few fields"
+    related_patterns: ["abstract-factory", "composite"]
+    keywords: ["construct", "step-by-step", "fluent", "immutable"]
+
+  - id: factory-method
+    name: "Factory Method"
+    type: pattern
+    level: universal
+    category: creational
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Define an interface for creating objects, letting subclasses decide which class to instantiate"
+    when_to_use:
+      - "Need to decouple object creation from usage"
+      - "Subclasses should determine which objects to create"
+    anti_patterns:
+      - "Simple object creation with no variation"
+    related_patterns: ["abstract-factory", "prototype"]
+    keywords: ["create", "instantiate", "subclass", "polymorphism"]
+
+  - id: prototype
+    name: "Prototype"
+    type: pattern
+    level: universal
+    category: creational
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Create new objects by copying an existing object (prototype)"
+    when_to_use:
+      - "Creating objects is expensive and similar instances are needed"
+      - "Classes to instantiate are specified at runtime"
+    anti_patterns:
+      - "Simple constructors are sufficient"
+    related_patterns: ["abstract-factory"]
+    keywords: ["clone", "copy", "template", "instance"]
+
+  - id: singleton
+    name: "Singleton"
+    type: pattern
+    level: universal
+    category: creational
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Ensure a class has only one instance and provide a global point of access"
+    when_to_use:
+      - "Exactly one instance of a class is needed (config, logger, connection pool)"
+      - "Controlled access to sole instance"
+    anti_patterns:
+      - "Overuse makes testing difficult (prefer dependency injection)"
+      - "Global mutable state"
+    related_patterns: ["factory-method"]
+    keywords: ["single instance", "global", "shared resource", "lazy init"]
+
+  # ==========================================================================
+  # Structural (7)
+  # ==========================================================================
+
+  - id: adapter
+    name: "Adapter"
+    type: pattern
+    level: universal
+    category: structural
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Convert the interface of a class into another interface clients expect"
+    when_to_use:
+      - "Integrating with legacy or third-party code with incompatible interface"
+      - "Reuse existing class that doesn't match required interface"
+    anti_patterns:
+      - "Interfaces already compatible"
+    related_patterns: ["bridge", "decorator", "proxy"]
+    keywords: ["wrapper", "legacy", "interface", "convert", "third-party"]
+
+  - id: bridge
+    name: "Bridge"
+    type: pattern
+    level: universal
+    category: structural
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Decouple an abstraction from its implementation so they can vary independently"
+    when_to_use:
+      - "Abstraction and implementation should be extensible independently"
+      - "Need to switch implementations at runtime"
+    anti_patterns:
+      - "Only one implementation exists"
+    related_patterns: ["adapter", "strategy"]
+    keywords: ["abstraction", "implementation", "decouple", "platform"]
+
+  - id: composite
+    name: "Composite"
+    type: pattern
+    level: universal
+    category: structural
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Compose objects into tree structures to represent part-whole hierarchies"
+    when_to_use:
+      - "Tree structure of objects (file systems, UI components, org charts)"
+      - "Clients should treat individual and composite objects uniformly"
+    anti_patterns:
+      - "Flat data structures"
+    related_patterns: ["decorator", "iterator", "visitor"]
+    keywords: ["tree", "hierarchy", "recursive", "part-whole", "component"]
+
+  - id: decorator
+    name: "Decorator"
+    type: pattern
+    level: universal
+    category: structural
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Attach additional responsibilities to an object dynamically"
+    when_to_use:
+      - "Add behavior to individual objects without affecting others"
+      - "Extension by subclassing is impractical"
+      - "Wrapping with cross-cutting concerns (logging, caching, retry)"
+    anti_patterns:
+      - "Simple behavior that doesn't need composition"
+    related_patterns: ["adapter", "composite", "strategy"]
+    keywords: ["wrapper", "enhance", "layer", "middleware", "cross-cutting"]
+
+  - id: facade
+    name: "Facade"
+    type: pattern
+    level: universal
+    category: structural
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Provide a unified interface to a set of interfaces in a subsystem"
+    when_to_use:
+      - "Complex subsystem needs a simple entry point"
+      - "Reduce coupling between client and subsystem"
+    anti_patterns:
+      - "Subsystem is already simple"
+    related_patterns: ["adapter", "mediator"]
+    keywords: ["simplify", "subsystem", "entry point", "unified interface"]
+
+  - id: flyweight
+    name: "Flyweight"
+    type: pattern
+    level: universal
+    category: structural
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Use sharing to support large numbers of fine-grained objects efficiently"
+    when_to_use:
+      - "Large number of similar objects consuming too much memory"
+      - "Most object state can be made extrinsic"
+    anti_patterns:
+      - "Few objects or objects with unique state"
+    related_patterns: ["composite", "singleton"]
+    keywords: ["sharing", "memory", "pool", "cache", "intrinsic"]
+
+  - id: proxy
+    name: "Proxy"
+    type: pattern
+    level: universal
+    category: structural
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Provide a surrogate or placeholder for another object to control access"
+    when_to_use:
+      - "Lazy initialization of expensive objects"
+      - "Access control, logging, or caching for an object"
+      - "Remote object representation"
+    anti_patterns:
+      - "Direct access is simpler and sufficient"
+    related_patterns: ["adapter", "decorator"]
+    keywords: ["surrogate", "placeholder", "lazy", "remote", "access control"]
+
+  # ==========================================================================
+  # Behavioral (11)
+  # ==========================================================================
+
+  - id: chain-of-responsibility
+    name: "Chain of Responsibility"
+    type: pattern
+    level: universal
+    category: behavioral
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Pass request along a chain of handlers until one handles it"
+    when_to_use:
+      - "Multiple handlers can process a request"
+      - "Handler should be determined at runtime"
+      - "Middleware pipelines"
+    anti_patterns:
+      - "Single known handler"
+    related_patterns: ["composite", "command"]
+    keywords: ["handler", "middleware", "pipeline", "filter", "chain"]
+
+  - id: command
+    name: "Command"
+    type: pattern
+    level: universal
+    category: behavioral
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Encapsulate a request as an object, allowing parameterization and queuing"
+    when_to_use:
+      - "Need undo/redo functionality"
+      - "Queue or log operations"
+      - "Decouple sender from receiver"
+    anti_patterns:
+      - "Simple direct method calls"
+    related_patterns: ["memento", "strategy"]
+    keywords: ["undo", "redo", "queue", "action", "execute", "transaction"]
+
+  - id: interpreter
+    name: "Interpreter"
+    type: pattern
+    level: universal
+    category: behavioral
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Define a grammar representation and an interpreter for that grammar"
+    when_to_use:
+      - "Domain-specific language needs to be interpreted"
+      - "Grammar is simple and frequency of interpretation is high"
+    anti_patterns:
+      - "Complex grammars (use parser generators)"
+    related_patterns: ["composite", "visitor"]
+    keywords: ["grammar", "DSL", "parse", "expression", "language"]
+
+  - id: iterator
+    name: "Iterator"
+    type: pattern
+    level: universal
+    category: behavioral
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Provide sequential access to elements without exposing underlying representation"
+    when_to_use:
+      - "Traverse collections without exposing internals"
+      - "Multiple traversal algorithms needed"
+    anti_patterns:
+      - "Simple arrays with direct indexing"
+    related_patterns: ["composite", "visitor"]
+    keywords: ["traverse", "collection", "cursor", "next", "enumerate"]
+
+  - id: mediator
+    name: "Mediator"
+    type: pattern
+    level: universal
+    category: behavioral
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Define an object that encapsulates how a set of objects interact"
+    when_to_use:
+      - "Many objects communicate in complex ways"
+      - "Reuse of objects is difficult due to inter-dependencies"
+    anti_patterns:
+      - "Few objects with simple interactions"
+    related_patterns: ["facade", "observer"]
+    keywords: ["coordinator", "hub", "decouple", "interaction"]
+
+  - id: memento
+    name: "Memento"
+    type: pattern
+    level: universal
+    category: behavioral
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Capture and externalize an object's internal state for later restoration"
+    when_to_use:
+      - "Need to save/restore object state (undo, snapshot)"
+      - "Direct access to state would break encapsulation"
+    anti_patterns:
+      - "Objects with no meaningful state to save"
+    related_patterns: ["command"]
+    keywords: ["snapshot", "undo", "restore", "state", "checkpoint"]
+
+  - id: observer
+    name: "Observer"
+    type: pattern
+    level: universal
+    category: behavioral
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Define a one-to-many dependency so that when one object changes, all dependents are notified"
+    when_to_use:
+      - "Multiple objects need to react to state changes"
+      - "Loose coupling between publisher and subscribers"
+      - "Event-driven UI or notification systems"
+    anti_patterns:
+      - "Single dependent with direct call"
+    related_patterns: ["mediator", "command"]
+    keywords: ["publish", "subscribe", "event", "notify", "listener", "callback"]
+
+  - id: state
+    name: "State"
+    type: pattern
+    level: universal
+    category: behavioral
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Allow an object to alter its behavior when its internal state changes"
+    when_to_use:
+      - "Object behavior depends on state and changes at runtime"
+      - "Replace complex conditionals based on state"
+    anti_patterns:
+      - "Few states with simple logic"
+    related_patterns: ["strategy", "singleton"]
+    keywords: ["state machine", "transition", "behavior", "finite state"]
+
+  - id: strategy
+    name: "Strategy"
+    type: pattern
+    level: universal
+    category: behavioral
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Define a family of algorithms and make them interchangeable"
+    when_to_use:
+      - "Multiple algorithms for the same task"
+      - "Need to swap algorithms at runtime"
+      - "Avoid conditionals for algorithm selection"
+    anti_patterns:
+      - "Only one algorithm that never changes"
+    related_patterns: ["state", "template-method", "bridge"]
+    keywords: ["algorithm", "policy", "interchangeable", "runtime swap"]
+
+  - id: template-method
+    name: "Template Method"
+    type: pattern
+    level: universal
+    category: behavioral
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Define skeleton of an algorithm, deferring some steps to subclasses"
+    when_to_use:
+      - "Common algorithm structure with varying steps"
+      - "Control extension points in a framework"
+    anti_patterns:
+      - "Algorithm steps are all identical"
+    related_patterns: ["strategy", "factory-method"]
+    keywords: ["skeleton", "hook", "override", "framework", "base class"]
+
+  - id: visitor
+    name: "Visitor"
+    type: pattern
+    level: universal
+    category: behavioral
+    source:
+      reference: "GoF"
+      author: "Gamma, Helm, Johnson, Vlissides"
+    description: "Represent an operation to be performed on elements of an object structure"
+    when_to_use:
+      - "Many distinct operations on an object structure"
+      - "Object structure rarely changes but operations change frequently"
+    anti_patterns:
+      - "Object structure changes frequently"
+    related_patterns: ["composite", "iterator"]
+    keywords: ["traverse", "operation", "double dispatch", "accept"]

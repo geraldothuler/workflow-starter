@@ -1,0 +1,172 @@
+provider:
+  id: kubectl
+  name: "Kubernetes (kubectl)"
+  description: "Fetches infrastructure context from Kubernetes clusters"
+
+  transport:
+    primary: cli
+    fallback: mcp
+
+    cli:
+      command: "kubectl"
+      timeout: "30s"
+      available_check: ["cluster-info", "--request-timeout=5s"]
+
+    mcp:
+      command: "npx"
+      args: ["-y", "@anthropic-ai/kubernetes-mcp"]
+      timeout: "60s"
+      startup_timeout: "15s"
+
+  auth:
+    required: false
+    resolve_order: ["env", "keyring", "encrypted-file"]
+    setup_guide: |
+      kubectl uses your existing kubeconfig (~/.kube/config).
+      Ensure you have access to the target cluster:
+        kubectl cluster-info
+        kubectl get namespaces
+
+  defaults:
+    namespace: "default"
+    ttl: "5m"
+    resource_types: ["pods", "services", "deployments", "nodes"]
+
+  fetch_steps:
+    - id: pods
+      cli_command: "get pods -n {{.namespace}} -o json"
+      mcp_tool: "kubectl_get"
+      mcp_args: { resource: "pods", namespace: "{{.namespace}}" }
+
+      mapping:
+        topology:
+          source_path: "items"
+          each:
+            kind:      { value: "Pod" }
+            name:      { path: "metadata.name" }
+            namespace: { path: "metadata.namespace" }
+            status:    { path: "status.phase" }
+            labels:    { path: "metadata.labels" }
+            containers:
+              source_path: "spec.containers"
+              each:
+                name:        { path: "name" }
+                image:       { path: "image" }
+                cpu_request: { path: "resources.requests.cpu" }
+                cpu_limit:   { path: "resources.limits.cpu" }
+                mem_request: { path: "resources.requests.memory" }
+                mem_limit:   { path: "resources.limits.memory" }
+              ready_from: "status.containerStatuses"
+
+        health:
+          source_path: "items"
+          transform: "health_from_pod_status"
+          args:
+            name_path: "metadata.name"
+            phase_path: "status.phase"
+            conditions_path: "status.conditions"
+            ready_type: "Ready"
+
+    - id: services
+      cli_command: "get services -n {{.namespace}} -o json"
+      mcp_tool: "kubectl_get"
+      mcp_args: { resource: "services", namespace: "{{.namespace}}" }
+
+      mapping:
+        topology:
+          source_path: "items"
+          each:
+            kind:      { value: "Service" }
+            name:      { path: "metadata.name" }
+            namespace: { path: "metadata.namespace" }
+            status:    { value: "Active" }
+            labels:    { path: "metadata.labels" }
+            metadata:
+              cluster_ip: { path: "spec.clusterIP" }
+              type:       { path: "spec.type" }
+              ports:      { path: "spec.ports", transform: "format_ports" }
+
+    - id: deployments
+      cli_command: "get deployments -n {{.namespace}} -o json"
+      mcp_tool: "kubectl_get"
+      mcp_args: { resource: "deployments", namespace: "{{.namespace}}" }
+
+      mapping:
+        topology:
+          source_path: "items"
+          each:
+            kind:      { value: "Deployment" }
+            name:      { path: "metadata.name" }
+            namespace: { path: "metadata.namespace" }
+            status:    { transform: "deployment_status", args: { conditions_path: "status.conditions" } }
+            labels:    { path: "metadata.labels" }
+            replicas:
+              desired:   { path: "spec.replicas" }
+              ready:     { path: "status.readyReplicas", default: 0 }
+              available: { path: "status.availableReplicas", default: 0 }
+            containers:
+              source_path: "spec.template.spec.containers"
+              each:
+                name:        { path: "name" }
+                image:       { path: "image" }
+                cpu_request: { path: "resources.requests.cpu" }
+                cpu_limit:   { path: "resources.limits.cpu" }
+                mem_request: { path: "resources.requests.memory" }
+                mem_limit:   { path: "resources.limits.memory" }
+
+        health:
+          source_path: "items"
+          transform: "health_from_conditions"
+          args:
+            name_path: "metadata.name"
+            kind: "Deployment"
+            conditions_path: "status.conditions"
+            ready_type: "Available"
+
+    - id: nodes
+      cli_command: "get nodes -o json"
+      mcp_tool: "kubectl_get"
+      mcp_args: { resource: "nodes" }
+
+      mapping:
+        topology:
+          source_path: "items"
+          each:
+            kind:   { value: "Node" }
+            name:   { path: "metadata.name" }
+            status: { transform: "node_status", args: { conditions_path: "status.conditions" } }
+            labels: { path: "metadata.labels" }
+            metadata:
+              os:            { path: "status.nodeInfo.osImage" }
+              kernel:        { path: "status.nodeInfo.kernelVersion" }
+              runtime:       { path: "status.nodeInfo.containerRuntimeVersion" }
+              kubelet:       { path: "status.nodeInfo.kubeletVersion" }
+              allocatable_cpu: { path: "status.allocatable.cpu" }
+              allocatable_mem: { path: "status.allocatable.memory" }
+
+        health:
+          source_path: "items"
+          transform: "health_from_conditions"
+          args:
+            name_path: "metadata.name"
+            kind: "Node"
+            conditions_path: "status.conditions"
+            ready_type: "Ready"
+
+        metrics:
+          source_path: "items"
+          transform: "node_allocatable_metrics"
+          args:
+            name_path: "metadata.name"
+            allocatable_path: "status.allocatable"
+
+    - id: top_pods
+      cli_command: "top pods -n {{.namespace}} --no-headers"
+      optional: true
+      parse_mode: "text"
+
+      mapping:
+        metrics:
+          transform: "parse_kubectl_top"
+          args:
+            format: "name cpu_millicores mem_bytes"

@@ -1,0 +1,14 @@
+[
+  {
+    "service": "api-gateway",
+    "deps": ["user-service", "auth-service"]
+  },
+  {
+    "service": "user-service",
+    "deps": ["database", "redis-cache"]
+  },
+  {
+    "service": "auth-service",
+    "deps": ["database"]
+  }
+]

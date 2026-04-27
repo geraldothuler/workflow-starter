@@ -1,0 +1,21 @@
+# Maps container image prefixes to canonical TechRegistry names.
+# Used by transform function "tech_from_image".
+
+tech_mapping:
+  postgres:      "PostgreSQL"
+  redis:         "Redis"
+  mongo:         "MongoDB"
+  mysql:         "MySQL"
+  elasticsearch: "Elasticsearch"
+  kafka:         "Kafka"
+  rabbitmq:      "RabbitMQ"
+  nginx:         "Nginx"
+  envoy:         "Envoy"
+  grafana:       "Grafana"
+  prometheus:    "Prometheus"
+  jaeger:        "Jaeger"
+  vault:         "HashiCorp Vault"
+  consul:        "Consul"
+  nats:          "NATS"
+  minio:         "MinIO"
+  # Extensible via .workflow/infra-providers/tech_mapping.yml

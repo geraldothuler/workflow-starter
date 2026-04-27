@@ -1,0 +1,83 @@
+id: datadog-monitor-update
+name: "Datadog — Atualizar Monitor"
+description: |
+  Busca um monitor pelo nome (search, não GET by ID — veja nota abaixo),
+  exibe config atual e aplica atualização de threshold e/ou message.
+
+  NOTA: GET /api/v1/monitor/{id} retorna 401 com app keys de escopo limitado.
+  Usar sempre /api/v1/monitor/search para leitura — funciona com monitors_write.
+risk: low
+approval_required: [3]
+
+vars:
+  dd_creds: "~/.workflow/datadog-credentials.sh"  # exporta DD_API_KEY e DD_APP_KEY
+  site: "datadoghq.com"
+  monitor_query: ""        # termo de busca (ex: "driver-association-past-retry pending.error")
+  monitor_id: ""           # ID extraído no step 1 (preenchido manualmente se necessário)
+  new_threshold: ""        # novo valor crítico (ex: "3")
+  new_message: ""          # nova mensagem completa (incluir @slack-... se necessário)
+
+steps:
+  - id: 1
+    tool: |
+      source {{.dd_creds}} && \
+      curl -sf "https://api.{{.site}}/api/v1/monitor/search?query={{.monitor_query}}" \
+        -H "DD-API-KEY: ${DD_API_KEY}" \
+        -H "DD-APPLICATION-KEY: ${DD_APP_KEY}" | \
+      python3 -c "
+      import json, sys
+      d = json.load(sys.stdin)
+      for m in d.get('monitors', []):
+          print('id:', m['id'])
+          print('name:', m['name'])
+          print('query:', m.get('query', ''))
+          print('status:', m.get('status', ''))
+          print()
+      "
+    purpose: "listar monitores que correspondem ao termo — extrair ID para o step 3"
+    owner: auto
+
+  - id: 2
+    tool: |
+      source {{.dd_creds}} && \
+      curl -sf "https://api.{{.site}}/api/v1/monitor/search?query={{.monitor_query}}" \
+        -H "DD-API-KEY: ${DD_API_KEY}" \
+        -H "DD-APPLICATION-KEY: ${DD_APP_KEY}" | \
+      python3 -c "
+      import json, sys
+      d = json.load(sys.stdin)
+      for m in d.get('monitors', []):
+          if str(m['id']) == '{{.monitor_id}}':
+              print(json.dumps({
+                  'id': m['id'],
+                  'name': m['name'],
+                  'type': m.get('type'),
+                  'query': m.get('query'),
+                  'message': m.get('message'),
+                  'tags': m.get('tags', []),
+              }, indent=2))
+      "
+    purpose: "exibir config atual do monitor selecionado antes de alterar"
+    owner: auto
+
+  - id: 3
+    tool: |
+      source {{.dd_creds}} && \
+      curl -sf -X PUT "https://api.{{.site}}/api/v1/monitor/{{.monitor_id}}" \
+        -H "DD-API-KEY: ${DD_API_KEY}" \
+        -H "DD-APPLICATION-KEY: ${DD_APP_KEY}" \
+        -H "Content-Type: application/json" \
+        -d "{
+          \"options\": {\"thresholds\": {\"critical\": {{.new_threshold}}}},
+          \"message\": {{.new_message | json}}
+        }" | \
+      python3 -c "
+      import json, sys
+      d = json.load(sys.stdin)
+      if 'errors' in d:
+          print('ERRO:', d['errors']); exit(1)
+      print('OK — query:', d.get('query'))
+      "
+    purpose: "aplicar novo threshold e message — aguarda confirmação (approval_required)"
+    owner: human
+    rollback: "re-executar step 3 com os valores originais do step 2"

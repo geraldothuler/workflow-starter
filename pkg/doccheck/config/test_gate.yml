@@ -1,0 +1,64 @@
+# test_gate.yml — Test coverage gate rules
+# Absorbed from skills/wtb-test-coverage/SKILL.md (Phase 9.2b)
+# Loaded via go:embed in pkg/doccheck/
+
+test_gate:
+  steps: [detect, verify, impact, create, execute]
+
+  package_classification:
+    testable:
+      description: "Logica pura, funcoes deterministicas — meta >=80%"
+      coverage_target: 80
+      patterns:
+        - "pkg/types/"
+        - "pkg/parser/"
+        - "pkg/patterns/"
+        - "pkg/patterns_catalog/"
+        - "pkg/i18n/"
+        - "pkg/audit/"
+        - "pkg/context/"
+        - "pkg/export/"
+        - "pkg/extractor/"
+        - "pkg/features/"
+        - "pkg/logging/"
+        - "pkg/privacy/"
+        - "pkg/security/"
+        - "pkg/spec/"
+        - "pkg/sync/"
+        - "pkg/validation/"
+        - "pkg/backlog/"
+        - "pkg/techref/"
+        - "pkg/feasibility/"
+        - "pkg/critical_path/"
+        - "pkg/scaffold/"
+        - "pkg/runner/"
+        - "pkg/doccheck/"
+
+    partial:
+      description: "Mix de logica testavel + I/O interativo — meta 50-70%"
+      coverage_target: 50
+      patterns:
+        - "pkg/compliance/"
+        - "pkg/render/"
+        - "pkg/journey/"
+        - "pkg/playbook/"
+        - "pkg/mcp/"
+
+    io_limited:
+      description: "Intrinsecamente nao-testavel unitariamente"
+      coverage_target: 0
+      patterns:
+        - "pkg/ui/"
+        - "pkg/auth/"
+        - "pkg/llm/"
+        - "pkg/server/"
+        - "pkg/infracontext/"
+        - "pkg/ops/"
+        - "pkg/transport/"
+
+  rules:
+    - "Nova funcao publica → teste obrigatorio"
+    - "Novo campo em struct exportada → teste obrigatorio"
+    - "Branch condicional → teste de ambos paths"
+    - "Alteracao de API publica → verificar impacto em consumidores"
+    - "Nunca marcar tarefa como concluida sem passar pelo gate"

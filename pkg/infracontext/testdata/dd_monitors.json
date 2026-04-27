@@ -1,0 +1,26 @@
+[
+  {
+    "name": "High CPU on api-server",
+    "overall_state": "Alert",
+    "priority": 1,
+    "message": "CPU usage exceeds 90% on api-server. Check scaling policy.",
+    "created": "2026-01-15T10:30:00Z",
+    "tags": ["env:production", "service:api-gateway", "priority:P1"]
+  },
+  {
+    "name": "Disk Usage Warning",
+    "overall_state": "OK",
+    "priority": 4,
+    "message": "Disk usage normalized on worker nodes.",
+    "created": "2026-01-10T08:00:00Z",
+    "tags": ["env:production", "team:infra"]
+  },
+  {
+    "name": "Redis Connection Pool",
+    "overall_state": "Warn",
+    "priority": 3,
+    "message": "Redis connection pool utilization above 75%.",
+    "created": "2026-02-01T14:20:00Z",
+    "tags": ["env:production", "service:user-service", "priority:P3"]
+  }
+]

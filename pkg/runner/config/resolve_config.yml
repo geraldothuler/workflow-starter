@@ -1,0 +1,53 @@
+resolve:
+  default_chain: [session, chain, helm, repo, ask]
+
+  strategies:
+    session:
+      description: "Read from ~/.workflow/ session context"
+      source_file: "session.yml"
+
+    chain:
+      description: "Walk artifact chain to find upstream values"
+      artifact_dir: "docs/workflow/"
+      search_fields:
+        namespace: ["namespace", "environment"]
+        environment: ["environment"]
+        symptom: ["symptom", "title"]
+
+    helm:
+      description: "Parse Helm values for namespace/service mappings (prod first, then generic)"
+      search_files:
+        # Priority 1: production-specific values
+        - "*/deploy/helm/prod.yml"
+        - "*/deploy/helm/prod.yaml"
+        - "deploy/helm/prod.yml"
+        - "deploy/helm/prod.yaml"
+        - "helm/values-production.yaml"
+        - "helm/values-prod.yaml"
+        - "helm/values-production.yml"
+        - "helm/values-prod.yml"
+        - "deploy/helm/values-production.yaml"
+        - "deploy/helm/values-prod.yaml"
+        - "deploy/values-prod.yaml"
+        - "charts/*/values-production.yaml"
+        # Priority 2: generic values (fallback)
+        - "*/deploy/helm/chart/values.yaml"
+        - "deploy/helm/chart/values.yaml"
+        - "helm/values.yaml"
+        - "charts/*/values.yaml"
+      field_mappings:
+        namespace: ["namespace", "herbie-api-chart.namespace", "streaming-job-chart.namespace", "global.namespace", "metadata.namespace"]
+        deployment: ["applicationName", "herbie-api-chart.applicationName", "fullnameOverride", "nameOverride", "global.name"]
+        db-host: ["postgresql.host", "database.host", "global.postgresql.host"]
+        db-name: ["postgresql.database", "database.name", "herbie-api-chart.appEnvironmentVariables.SPRING_DATASOURCE_URL", "SPRING_DATASOURCE_URL"]
+        db-user: ["postgresql.username", "database.username", "herbie-api-chart.appEnvironmentVariables.SPRING_DATASOURCE_USERNAME", "SPRING_DATASOURCE_USERNAME"]
+        db-port: ["postgresql.port", "database.port"]
+        db-password-ssm: ["herbie-api-chart.appSsmSecrets"]
+        kafka-bootstrap: ["herbie-api-chart.appEnvironmentVariables.SPRING_KAFKA_BOOTSTRAPSERVERS", "SPRING_KAFKA_BOOTSTRAPSERVERS", "kafka.bootstrapServers"]
+        kafka-topic: ["kafka.topic"]
+
+    repo:
+      description: "Infer from repository markers via pkg/context"
+
+    ask:
+      description: "Interactive prompt with Socratic why_ask message"

@@ -1,0 +1,145 @@
+# ============================================================================
+# Anti-Patterns (8)
+# Sources: Microservices Patterns (Richardson), Refactoring (Fowler),
+#          AntiPatterns (Brown et al.), Cloud Design Patterns (Microsoft)
+# ============================================================================
+
+categories:
+  - id: structural
+    name: "Structural Patterns"
+  - id: behavioral
+    name: "Behavioral Patterns"
+  - id: scalability
+    name: "Scalability"
+  - id: data
+    name: "Data Management"
+
+patterns:
+
+  - id: distributed-monolith
+    name: "Distributed Monolith"
+    type: anti-pattern
+    level: universal
+    category: structural
+    source:
+      reference: "Microservices Patterns"
+      author: "Chris Richardson"
+    description: "Microservices that are tightly coupled and must be deployed together"
+    signs:
+      - "All services must be deployed together"
+      - "Shared database between services"
+      - "Synchronous calls chain across 3+ services"
+    remediation: ["database-per-service", "event-driven", "bounded-context"]
+    keywords: ["coupled", "monolith", "shared database", "deploy together"]
+
+  - id: god-class
+    name: "God Class"
+    type: anti-pattern
+    level: universal
+    category: structural
+    source:
+      reference: "Refactoring"
+      author: "Martin Fowler"
+    description: "Single class with too many responsibilities, violating SRP"
+    signs:
+      - "Class has 1000+ lines"
+      - "Class name is generic (Manager, Handler, Processor, Utils)"
+      - "Class depends on many unrelated packages"
+    remediation: ["strategy", "facade", "service-layer"]
+    keywords: ["large class", "SRP violation", "manager", "god object"]
+
+  - id: big-ball-of-mud
+    name: "Big Ball of Mud"
+    type: anti-pattern
+    level: universal
+    category: structural
+    source:
+      reference: "Big Ball of Mud"
+      author: "Brian Foote, Joseph Yoder"
+    description: "System with no discernible architecture, haphazard structure"
+    signs:
+      - "No clear module boundaries"
+      - "Everything depends on everything"
+      - "Changes cause unpredictable side effects"
+    remediation: ["bounded-context", "clean-architecture", "facade"]
+    keywords: ["spaghetti", "no architecture", "tangled", "unmaintainable"]
+
+  - id: golden-hammer
+    name: "Golden Hammer"
+    type: anti-pattern
+    level: universal
+    category: behavioral
+    source:
+      reference: "AntiPatterns"
+      author: "Brown, Malveau, McCormick, Mowbray"
+    description: "Using the same solution for every problem regardless of fit"
+    signs:
+      - "Same technology/framework used for every service"
+      - "No evaluation of alternatives for new requirements"
+      - "Architecture decisions made without context"
+    remediation: ["strategy", "bounded-context"]
+    keywords: ["one size fits all", "favorite tool", "bias"]
+
+  - id: spaghetti-code
+    name: "Spaghetti Code"
+    type: anti-pattern
+    level: universal
+    category: structural
+    source:
+      reference: "AntiPatterns"
+      author: "Brown, Malveau, McCormick, Mowbray"
+    description: "Tangled control flow with no modularity or clear structure"
+    signs:
+      - "Deeply nested conditionals and loops"
+      - "Functions with 100+ lines"
+      - "No separation of concerns"
+    remediation: ["strategy", "template-method", "command", "service-layer"]
+    keywords: ["tangled", "nested", "unstructured", "no modularity"]
+
+  - id: anemic-domain-model
+    name: "Anemic Domain Model"
+    type: anti-pattern
+    level: universal
+    category: structural
+    source:
+      reference: "Patterns of Enterprise Application Architecture"
+      author: "Martin Fowler"
+    description: "Domain entities without behavior — all logic lives in service classes"
+    signs:
+      - "Entities are pure data holders (getters/setters only)"
+      - "All business logic in service/manager classes"
+      - "Domain objects have no invariants or validations"
+    remediation: ["domain-model", "aggregate", "domain-events"]
+    keywords: ["getter", "setter", "data class", "DTO", "no behavior"]
+
+  - id: chatty-io
+    name: "Chatty I/O"
+    type: anti-pattern
+    level: universal
+    category: scalability
+    source:
+      reference: "Cloud Design Patterns"
+      author: "Microsoft"
+    description: "Excessive fine-grained calls to external services or databases"
+    signs:
+      - "N+1 query problem"
+      - "Many small HTTP calls instead of batch"
+      - "Loop with individual database queries"
+    remediation: ["cache-aside", "bff", "aggregate"]
+    keywords: ["N+1", "fine-grained", "batch", "latency", "round trip"]
+
+  - id: shared-database
+    name: "Shared Database"
+    type: anti-pattern
+    level: universal
+    category: data
+    source:
+      reference: "Microservices Patterns"
+      author: "Chris Richardson"
+    description: "Multiple services accessing the same database directly, creating hidden coupling"
+    signs:
+      - "Multiple services read/write the same tables"
+      - "Schema changes break multiple services"
+      - "Unclear data ownership"
+    remediation: ["database-per-service", "event-driven", "api-gateway"]
+    keywords: ["shared schema", "coupling", "ownership", "cross-service queries"]

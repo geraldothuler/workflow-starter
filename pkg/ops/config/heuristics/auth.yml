@@ -1,0 +1,12 @@
+heuristics:
+  # Token expira em breve — renovação preventiva recomendada.
+  # Threshold: 15 min permite completar operações em andamento.
+  - name: expiry_soon
+    conditions:
+      - field: expires_in_minutes
+        op: "<"
+        value: 15
+    status: warn
+    signal: "token '{profile}' expira em {expires_in_minutes} min — renovação recomendada"
+    actions:
+      - "renew AWS SSO token before continuing"

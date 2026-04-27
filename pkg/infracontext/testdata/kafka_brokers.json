@@ -1,0 +1,25 @@
+{
+  "data": [
+    {
+      "broker_id": "0",
+      "host": "broker-0.pkc-abc123.us-east-1.aws.confluent.cloud",
+      "port": "9092",
+      "rack": "use1-az1",
+      "cluster_id": "lkc-abc123"
+    },
+    {
+      "broker_id": "1",
+      "host": "broker-1.pkc-abc123.us-east-1.aws.confluent.cloud",
+      "port": "9092",
+      "rack": "use1-az2",
+      "cluster_id": "lkc-abc123"
+    },
+    {
+      "broker_id": "2",
+      "host": "broker-2.pkc-abc123.us-east-1.aws.confluent.cloud",
+      "port": "9092",
+      "rack": "use1-az3",
+      "cluster_id": "lkc-abc123"
+    }
+  ]
+}

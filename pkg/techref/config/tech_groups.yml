@@ -1,0 +1,85 @@
+# Tech families - related technologies that should share a single deep dive
+# When multiple members of the same group appear in an epic,
+# they are consolidated into one deep dive under the primary tech.
+# Override: .workflow/deep-dives/tech_groups.yml
+
+groups:
+  - name: "PostgreSQL Ecosystem"
+    primary: "PostgreSQL"
+    members:
+      - PostgreSQL
+      - pgx
+      - pgbouncer
+      - pg_dump
+      - psql
+      - sqlx
+
+  - name: "React Ecosystem"
+    primary: "React"
+    members:
+      - React
+      - React Router
+      - React Query
+      - Redux
+      - Zustand
+      - Next.js
+
+  - name: "Spring Ecosystem"
+    primary: "Spring Boot"
+    members:
+      - Spring Boot
+      - Spring Security
+      - Spring Data
+      - Spring Cloud
+      - Spring MVC
+
+  - name: "AWS Core"
+    primary: "AWS"
+    members:
+      - AWS
+      - S3
+      - EC2
+      - RDS
+      - Lambda
+      - SQS
+      - SNS
+      - DynamoDB
+      - CloudFront
+
+  - name: "Docker Ecosystem"
+    primary: "Docker"
+    members:
+      - Docker
+      - Docker Compose
+      - Dockerfile
+      - docker-compose
+
+  - name: "Kubernetes Ecosystem"
+    primary: "Kubernetes"
+    members:
+      - Kubernetes
+      - K8s
+      - kubectl
+      - Helm
+      - Kustomize
+
+  - name: "Testing JS"
+    primary: "Jest"
+    members:
+      - Jest
+      - Testing Library
+      - React Testing Library
+      - Enzyme
+      - Vitest
+
+  - name: "Go Ecosystem"
+    primary: "Go"
+    members:
+      - Go
+      - goroutine
+      - channel
+      - testify
+      - gomock
+      - chi
+      - gin
+      - echo

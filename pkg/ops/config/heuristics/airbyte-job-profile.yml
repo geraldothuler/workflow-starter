@@ -1,0 +1,27 @@
+heuristics:
+  # Infra instability: null failureType (pod kill) em múltiplas tentativas.
+  # Sinal: Airbyte não consegue determinar a causa — tipicamente pod evicted.
+  - name: infra_instability
+    conditions:
+      - field: null_failure_jobs
+        op: ">="
+        value: 1
+      - field: max_attempts_per_job
+        op: ">"
+        value: 2
+    operator: AND
+    status: warn
+    signal: "infra instability suspected — null failureType em {null_failure_jobs} job(s), máx {max_attempts_per_job} attempts"
+    actions:
+      - "wtb ops k8s-events --namespace data-platform --context cobli-prod-devices"
+
+  # Baixa taxa de sucesso: < 90% dos jobs succeeded.
+  - name: low_success_rate
+    conditions:
+      - field: success_rate
+        op: "<"
+        value: 0.9
+    status: warn
+    signal: "success_rate baixo: {success_rate} ({succeeded_count}/{jobs_sampled} syncs succeeded)"
+    actions:
+      - "investigate failed syncs for connection {connection_id}"
